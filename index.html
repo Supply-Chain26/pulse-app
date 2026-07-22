@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>PULSE — Pharmacy Urgent Live Stock Engine</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B1F2A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--primary:#0E7C86;--primary-light:#10949F;--primary-dark:#0A6069;--navy:#0B1F2A;--bg:#F4F6F8;--card:#FFFFFF;--text:#1A2B3C;--text-light:#5A6B7C;--border:#DDE3EA;--success:#16A34A;--warning:#F59E0B;--danger:#DC2626;--radius:10px;--shadow:0 2px 8px rgba(0,0,0,.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.gradient-bar{height:4px;background:linear-gradient(90deg,#0E7C86,#F59E0B,#DC2626,#0E7C86);background-size:200% 100%;animation:gradShift 4s linear infinite}
+@keyframes gradShift{0%{background-position:0 0}100%{background-position:200% 0}}
+header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:relative;min-height:64px}
+header img{height:38px}
+header h1{font-size:16px;font-weight:600;letter-spacing:.3px}
+header .subtitle{font-size:11px;opacity:.7;font-weight:300}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-left img{height:36px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
+.header-left .info .company{font-size:11px;font-weight:600;opacity:.9;letter-spacing:.5px}
+.header-left .info .dept{font-size:9px;opacity:.5;margin-top:1px}
+.header-left .info .slogan{font-size:9px;font-style:italic;opacity:.55;margin-top:3px;color:#F59E0B;letter-spacing:.3px}
+.header-center{position:absolute;left:50%;transform:translateX(-50%);text-align:center}
+.header-center .pulse{font-size:28px;font-weight:700;letter-spacing:4px;line-height:1;background:linear-gradient(135deg,#0E7C86,#10949F,#3DB8C4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-center .pulse-sub{font-size:8.5px;letter-spacing:2px;opacity:.4;text-transform:uppercase;margin-top:2px;-webkit-text-fill-color:initial}
+
+@media(max-width:600px){.header-left{display:flex;align-items:center;gap:10px}
+.header-left img{height:36px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
+.header-left .info .company{font-size:11px;font-weight:600;opacity:.9;letter-spacing:.5px}
+.header-left .info .dept{font-size:9px;opacity:.5;margin-top:1px}
+.header-left .info .slogan{font-size:9px;font-style:italic;opacity:.55;margin-top:3px;color:#F59E0B;letter-spacing:.3px}
+.header-center{position:static;transform:none;margin:0 auto}.header-right{display:none}header{flex-wrap:wrap;justify-content:center}}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;margin-left:8px}
+.badge-live{background:var(--success);color:#fff}
+.container{max-width:960px;margin:0 auto;padding:16px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.card h2{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;font-weight:500;color:var(--text-light)}
+.form-group label .req{color:var(--danger)}
+.form-group input,.form-group select,.form-group textarea{padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;transition:border .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(14,124,134,.15)}
+.search-box{position:relative}
+.search-box .dropdown{position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.12);z-index:100;display:none}
+.search-box .dropdown.show{display:block}
+.search-box .dropdown .dd-item{padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid #f0f0f0}
+.search-box .dropdown .dd-item:hover,.search-box .dropdown .dd-item.active{background:rgba(14,124,134,.08)}
+.search-box .dropdown .dd-item .code{font-weight:600;color:var(--primary)}
+.search-box .dropdown .dd-item .desc{color:var(--text-light)}
+.search-box .dropdown .dd-item .tag{font-size:10px;padding:1px 5px;border-radius:8px;margin-left:6px;font-weight:600}
+.tag-special{background:#FEF3C7;color:#92400E}
+.tag-delisted{background:#FEE2E2;color:#991B1B}
+.tag-unicharm{background:#DBEAFE;color:#1E40AF}
+.tag-devices{background:#E0E7FF;color:#3730A3}
+btn,.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+.btn-secondary{background:#E8EDEF;color:var(--text)}.btn-secondary:hover{background:#D5DBDF}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#B91C1C}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{background:#15803D}
+.btn-warning{background:var(--warning);color:#fff}.btn-warning:hover{background:#D97706}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-block{width:100%;justify-content:center}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--card);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:var(--shadow)}
+.kpi .num{font-size:22px;font-weight:700;color:var(--primary)}
+.kpi .lbl{font-size:11px;color:var(--text-light);margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#F0F3F6;padding:8px;text-align:left;font-weight:600;color:var(--navy);position:sticky;top:0;z-index:10}
+td{padding:7px 8px;border-bottom:1px solid #F0F3F6}
+tr:hover{background:rgba(14,124,134,.03)}
+.table-wrap{max-height:400px;overflow:auto;border:1px solid var(--border);border-radius:6px}
+.action-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.action-pending{background:#FEF3C7;color:#92400E}
+.action-blocked{background:#FEE2E2;color:#991B1B}
+.action-delisted{background:#FCE7F3;color:#9D174D}
+.action-unicharm{background:#DBEAFE;color:#1E40AF}
+.action-notavail{background:#FED7AA;color:#9A3412}
+.action-onhand{background:#D1FAE5;color:#065F46}
+.action-dim{background:#E0E7FF;color:#3730A3}
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+.filter-row select,.filter-row input{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit}
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px}
+.tab{padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);transition:all .15s}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.tab-content{display:none}.tab-content.active{display:block}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:30px;text-align:center;cursor:pointer;transition:border-color .2s}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--primary)}
+.upload-zone p{font-size:13px;color:var(--text-light)}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:var(--radius);padding:24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:16px}
+.toast{position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;z-index:2000;transform:translateX(120%);transition:transform .3s}
+.toast.show{transform:translateX(0)}
+.toast-success{background:var(--success)}.toast-error{background:var(--danger)}.toast-warning{background:var(--warning)}
+.hidden{display:none!important}
+.login-wrap{min-height:100vh;display:flex;flex-direction:column}
+.login-box{max-width:360px;width:90%;margin:auto;padding:30px;background:var(--card);border-radius:var(--radius);box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.login-box h2{text-align:center;font-size:18px;margin-bottom:20px;color:var(--navy)}
+.user-bar{background:var(--navy);color:#fff;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.user-bar .info{display:flex;align-items:center;gap:8px}
+.user-bar .role-badge{background:rgba(255,255,255,.15);padding:2px 8px;border-radius:8px;font-size:10px}
+.chart-container{height:200px;position:relative;margin:16px 0}
+.bar-chart{display:flex;align-items:flex-end;justify-content:space-around;height:100%;gap:4px;padding:0 10px}
+.bar-col{display:flex;flex-direction:column;align-items:center;flex:1;max-width:60px}
+.bar{width:100%;border-radius:4px 4px 0 0;min-height:2px;transition:height .5s}
+.bar-label{font-size:9px;color:var(--text-light);margin-top:4px;text-align:center;word-break:break-all}
+.bar-val{font-size:10px;font-weight:600;margin-bottom:2px}
+.order-days{font-size:10px;color:var(--primary);font-weight:500}
+.order-today{background:rgba(22,163,74,.1);border-left:3px solid var(--success);padding-left:8px}
+select option.today-delivery{background:#D1FAE5}
+.checkbox-col{width:30px;text-align:center}
+.select-all-wrap{display:flex;align-items:center;gap:6px;font-size:12px}
+.breakdown-section{margin-top:20px}
+.breakdown-section h3{font-size:14px;font-weight:600;margin-bottom:10px;color:var(--navy)}
+.breakdown-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.breakdown-card{background:#F8FAFC;border:1px solid var(--border);border-radius:8px;padding:12px}
+.breakdown-card .title{font-size:12px;font-weight:600;color:var(--navy)}
+.breakdown-card .stats{font-size:11px;color:var(--text-light);margin-top:4px}
+.breakdown-card .stats span{font-weight:600;color:var(--primary)}
+</style>
+</head>
+<body>
+<div id="app">
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-wrap">
+<div class="gradient-bar"></div>
+<header>
+<div class="header-left">
+<img src="./logo.png" alt="">
+<div class="info">
+<div class="company">United Pharmacy</div>
+<div class="dept">Demand &amp; Inventory Team</div>
+<div class="slogan">Smart Tactics, Great Season</div>
+</div>
+</div>
+<div class="header-center">
+<div class="pulse">PULSE</div>
+<div class="pulse-sub">Pharmacy Urgent Live Stock Engine</div>
+</div>
+<div style="width:120px"></div>
+</header>
+<div class="login-box">
+<h2>Sign In</h2>
+<div class="form-group" style="margin-bottom:12px">
+<label>User</label>
+<select id="loginUser"><option value="">Loading...</option></select>
+</div>
+<div class="form-group" style="margin-bottom:16px">
+<label>Password</label>
+<input type="password" id="loginPass" placeholder="Enter password">
+</div>
+<button class="btn btn-primary btn-block" onclick="doLogin()">Sign In</button>
+<p id="loginError" style="color:var(--danger);font-size:12px;margin-top:8px;display:none"></p>
+</div>
+</div>
+
+<!-- MAIN APP (hidden until login) -->
+<div id="mainApp" class="hidden">
+<div class="gradient-bar"></div>
+<header>
+<div class="header-left">
+<img src="./logo.png" alt="">
+<div class="info">
+<div class="company">United Pharmacy</div>
+<div class="dept">Demand &amp; Inventory Team</div>
+<div class="slogan">Smart Tactics, Great Season</div>
+</div>
+</div>
+<div class="header-center">
+<div class="pulse">PULSE <span class="badge badge-live" style="-webkit-text-fill-color:#fff">LIVE</span></div>
+<div class="pulse-sub">Pharmacy Urgent Live Stock Engine</div>
+</div>
+<div style="width:120px"></div>
+</header>
+<div class="user-bar">
+<div class="info">
+<span id="userDisplayName"></span>
+<span class="role-badge" id="userRoleBadge"></span>
+</div>
+<div style="display:flex;gap:8px;align-items:center">
+<button class="btn btn-sm btn-secondary" onclick="showChangePassword()">🔑</button>
+<button class="btn btn-sm btn-danger" onclick="doLogout()">Logout</button>
+</div>
+</div>
+
+<!-- ===== CAPTAIN PORTAL ===== -->
+<div id="portalCaptain" class="hidden">
+<div class="container">
+<div class="tabs">
+<div class="tab active" onclick="switchTab(this,'captainEntry')">New Entry</div>
+<div class="tab" onclick="switchTab(this,'captainUpload')">Upload File</div>
+<div class="tab" onclick="switchTab(this,'captainSchedule')">Schedule</div>
+<div class="tab" onclick="switchTab(this,'captainHistory')">My Submissions</div>
+</div>
+
+<div id="captainEntry" class="tab-content active">
+<div class="card">
+<h2>📝 Submit Feedback</h2>
+<div class="form-grid">
+<div class="form-group">
+<label>Store <span class="req">*</span></label>
+<div class="search-box">
+<input id="entryStore" autocomplete="off" placeholder="Type store code..." oninput="searchStores(this)" onfocus="searchStores(this)" onchange="onStoreChange()">
+<div class="dropdown" id="entryStoreDD"></div>
+</div>
+</div>
+<div class="form-group">
+<label>Area</label>
+<input id="entryArea" readonly class="readonly">
+</div>
+<div class="form-group">
+<label>Sales Type</label>
+<input id="entrySalesType" readonly class="readonly">
+</div>
+<div class="form-group">
+<label>Hub</label>
+<input id="entryHub" readonly class="readonly">
+</div>
+<div class="form-group">
+<label>Order Days</label>
+<input id="entryOrderDays" readonly class="readonly">
+</div>
+<div class="form-group">
+<label>Item Code <span class="req">*</span></label>
+<div class="search-box">
+<input id="entryItem" autocomplete="off" placeholder="Type code or name..." oninput="onItemCodeInput()" onfocus="searchItems(this,'entryItemDD')">
+<div class="dropdown" id="entryItemDD"></div>
+</div>
+</div>
+<div class="form-group">
+<label>Description</label>
+<div class="search-box">
+<input id="entryDesc" autocomplete="off" placeholder="Auto-filled or search..." oninput="searchItems(this,'entryDescDD','desc')" onfocus="searchItems(this,'entryDescDD','desc')">
+<div class="dropdown" id="entryDescDD"></div>
+</div>
+</div>
+<div class="form-group full" id="itemStatusBadge" style="display:none"></div>
+<div class="form-group">
+<label>Quantity <span class="req">*</span></label>
+<input id="entryQty" type="number" min="1" placeholder="Required">
+</div>
+<div class="form-group">
+<label>Physical Onhand</label>
+<input id="entryOnhand" type="number" min="0" placeholder="Optional">
+</div>
+<div class="form-group">
+<label>Feedback <span class="req">*</span></label>
+<select id="entryFeedback" onchange="onFeedbackChange()"><option value="">Select...</option></select>
+</div>
+<div class="form-group full" id="otherFeedbackGroup" style="display:none">
+<label>Specify Feedback <span class="req">*</span></label>
+<input id="entryFeedbackOther" placeholder="Please describe...">
+</div>
+</div>
+<div style="margin-top:16px;display:flex;gap:8px">
+<button class="btn btn-primary" onclick="submitEntry()">Submit</button>
+<button class="btn btn-secondary" onclick="resetEntry()">Clear</button>
+</div>
+</div>
+</div>
+
+<div id="captainUpload" class="tab-content">
+<div class="card">
+<h2>📤 Upload File</h2>
+<p style="font-size:12px;color:var(--text-light);margin-bottom:12px">Required: <b>Store</b>, <b>Item Code</b>, <b>Quantity</b>, <b>Feedback</b>. The item name is filled automatically from the catalog — Description &amp; Physical Onhand are optional.</p>
+<button class="btn btn-sm btn-secondary" onclick="downloadTemplate()" style="margin-bottom:12px">⬇ Download Template</button>
+<div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+<p>📁 Click or drag file here</p>
+<input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFileUpload(this)">
+</div>
+<div id="uploadPreview" class="hidden" style="margin-top:16px">
+<div class="table-wrap"><table id="uploadTable"></table></div>
+<div style="margin-top:12px;display:flex;gap:8px">
+<button class="btn btn-primary" onclick="confirmUpload()">Confirm Upload</button>
+<button class="btn btn-secondary" onclick="cancelUpload()">Cancel</button>
+</div>
+</div>
+</div>
+</div>
+
+<div id="captainSchedule" class="tab-content">
+<div class="card">
+<h2>📅 Order Schedule</h2>
+<p style="font-size:12px;color:var(--text-light);margin-bottom:12px">Order days for pharmacies in your area</p>
+<div class="table-wrap" style="max-height:500px"><table id="scheduleTable"></table></div>
+</div>
+</div>
+
+<div id="captainHistory" class="tab-content">
+<div class="card">
+<h2>📋 My Submissions</h2>
+<div class="filter-row">
+<select id="captHistAction" onchange="loadCaptainHistory()"><option value="">All Actions</option></select>
+<div style="display:flex;align-items:center;gap:4px"><label style="font-size:11px;color:var(--text-light)">From</label><input type="date" id="captHistFrom" onchange="loadCaptainHistory()"></div>
+<div style="display:flex;align-items:center;gap:4px"><label style="font-size:11px;color:var(--text-light)">To</label><input type="date" id="captHistTo" onchange="loadCaptainHistory()"></div>
+<button class="btn btn-sm btn-primary" onclick="exportCaptainHistory()">⬇ Export</button>
+</div>
+<div id="captHistStats" class="kpi-row"></div>
+<div class="table-wrap"><table id="captHistTable"></table></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ===== SUPERVISOR PORTAL ===== -->
+<div id="portalSupervisor" class="hidden">
+<div class="container">
+<div class="card">
+<h2>📊 Supervisor Dashboard</h2>
+<div id="supStats" class="kpi-row"></div>
+<div class="filter-row">
+<select id="supFilterStore"><option value="">All Stores</option></select>
+<select id="supFilterAction"><option value="">All Actions</option></select>
+<select id="supFilterCaptain"><option value="">All Captains</option></select>
+<input type="date" id="supFilterFrom">
+<input type="date" id="supFilterTo">
+<button class="btn btn-sm btn-primary" onclick="applySupFilter()">🔍 Apply Filter</button>
+<button class="btn btn-sm btn-secondary" onclick="refreshSupData()">🔄 Refresh</button>
+<button class="btn btn-sm btn-secondary" onclick="clearSupFilters()">✕ Clear</button>
+<button class="btn btn-sm btn-primary" onclick="exportSupData()">⬇ Export</button>
+</div>
+<div class="table-wrap"><table id="supTable"></table></div>
+</div>
+</div>
+</div>
+
+<!-- ===== MANAGER PORTAL ===== -->
+<div id="portalManager" class="hidden">
+<div class="container">
+<div class="card">
+<h2>📈 Manager Dashboard</h2>
+<div id="mgrStats" class="kpi-row"></div>
+<div class="filter-row">
+<select id="mgrFilterSup"><option value="">All Supervisors</option></select>
+<select id="mgrFilterStore"><option value="">All Stores</option></select>
+<select id="mgrFilterAction"><option value="">All Actions</option></select>
+<select id="mgrFilterArea"><option value="">All Areas</option></select>
+<input type="date" id="mgrFilterFrom">
+<input type="date" id="mgrFilterTo">
+<button class="btn btn-sm btn-primary" onclick="applyMgrFilter()">🔍 Apply Filter</button>
+<button class="btn btn-sm btn-secondary" onclick="refreshMgrData()">🔄 Refresh</button>
+<button class="btn btn-sm btn-secondary" onclick="clearMgrFilters()">✕ Clear</button>
+<button class="btn btn-sm btn-primary" onclick="exportMgrData()">⬇ Export</button>
+</div>
+<div class="table-wrap"><table id="mgrTable"></table></div>
+</div>
+</div>
+</div>
+
+<!-- ===== ADMIN PORTAL ===== -->
+<div id="portalAdmin" class="hidden">
+<div class="container">
+<div class="tabs">
+<div class="tab active" onclick="switchTab(this,'adminDash')">Dashboard</div>
+<div class="tab" onclick="switchTab(this,'adminData')">All Data</div>
+<div class="tab" onclick="switchTab(this,'adminUsers')">Users</div>
+<div class="tab" onclick="switchTab(this,'adminActions')">Actions</div>
+<div class="tab" onclick="switchTab(this,'adminBlocked')">Blocked Items</div>
+<div class="tab" onclick="switchTab(this,'adminCatalog')">Items Catalog</div>
+</div>
+
+<div id="adminDash" class="tab-content active">
+<div id="dashStats" class="kpi-row"></div>
+<div class="card">
+<h2>📊 Actions Overview</h2>
+<div id="actionCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px"></div>
+<div class="chart-container"><div id="dashChart" class="bar-chart"></div></div>
+</div>
+<div class="card">
+<h2>🗂 Breakdown by Area</h2>
+<div id="breakdownArea" class="breakdown-grid"></div>
+</div>
+<div class="card">
+<h2>👥 Breakdown by Captain</h2>
+<div id="breakdownCaptain" class="breakdown-grid"></div>
+</div>
+<div class="card">
+<h2>🔍 Breakdown by Supervisor</h2>
+<div id="breakdownSupervisor" class="breakdown-grid"></div>
+</div>
+<div class="card">
+<h2>📋 Breakdown by Manager</h2>
+<div id="breakdownManager" class="breakdown-grid"></div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+<button class="btn btn-sm btn-primary" onclick="exportBreakdown('area')">⬇ Export by Area</button>
+<button class="btn btn-sm btn-primary" onclick="exportBreakdown('captain')">⬇ Export by Captain</button>
+<button class="btn btn-sm btn-primary" onclick="exportBreakdown('supervisor')">⬇ Export by Supervisor</button>
+<button class="btn btn-sm btn-primary" onclick="exportBreakdown('manager')">⬇ Export by Manager</button>
+</div>
+</div>
+
+<div id="adminData" class="tab-content">
+<div class="card">
+<h2>📋 All Submissions</h2>
+<div class="filter-row">
+<select id="adFilterStore"><option value="">All Stores</option></select>
+<select id="adFilterAction"><option value="">All Actions</option></select>
+<select id="adFilterArea"><option value="">All Areas</option></select>
+<select id="adFilterCaptain"><option value="">All Captains</option></select>
+<input type="text" id="adFilterSearch" placeholder="Search..." onkeydown="if(event.key==='Enter')applyAdminFilter()">
+<input type="date" id="adFilterFrom">
+<input type="date" id="adFilterTo">
+<button class="btn btn-sm btn-primary" onclick="applyAdminFilter()">🔍 Apply Filter</button>
+<button class="btn btn-sm btn-secondary" onclick="refreshAdminData()">🔄 Refresh</button>
+<button class="btn btn-sm btn-secondary" onclick="clearAdminFilters()">✕ Clear</button>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+<button class="btn btn-sm btn-primary" onclick="exportAdmin('all')">⬇ Export All</button>
+<button class="btn btn-sm btn-warning" onclick="exportAdmin('pending')">⬇ Export Pending</button>
+<button class="btn btn-sm btn-success" onclick="exportAdmin('today')">⬇ Today's Deliveries</button>
+<button class="btn btn-sm btn-danger" id="bulkDeleteBtn" onclick="bulkDelete()" style="display:none">🗑 Delete Selected</button>
+</div>
+<div class="select-all-wrap" style="margin-bottom:8px">
+<input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
+<label for="selectAll" style="font-size:12px">Select All</label>
+</div>
+<div class="table-wrap" style="max-height:500px"><table id="adTable"></table></div>
+</div>
+
+<div class="card" style="margin-top:16px">
+<h2>📤 Upload Action File</h2>
+<p style="font-size:12px;color:var(--text-light);margin-bottom:8px">Upload Excel with columns: Store, Item, Action, Notes (optional)</p>
+<input type="file" id="actionFileInput" accept=".xlsx,.xls" onchange="handleActionUpload(this)">
+<div id="actionUploadPreview" class="hidden" style="margin-top:12px">
+<div class="table-wrap"><table id="actionUploadTable"></table></div>
+<div style="margin-top:8px"><button class="btn btn-primary" onclick="confirmActionUpload()">Apply Actions</button></div>
+</div>
+</div>
+</div>
+
+<div id="adminUsers" class="tab-content">
+<div class="card">
+<h2>👥 User Management</h2>
+<button class="btn btn-sm btn-primary" onclick="showAddUser()" style="margin-bottom:12px">+ Add User</button>
+<div class="table-wrap"><table id="usersTable"></table></div>
+</div>
+</div>
+
+<div id="adminActions" class="tab-content">
+<div class="card">
+<h2>⚙️ Manage Actions</h2>
+<p style="font-size:12px;color:var(--text-light);margin-bottom:12px">These are the action types available in the system</p>
+<div id="actionsList"></div>
+<div style="margin-top:12px;display:flex;gap:8px">
+<input id="newActionInput" placeholder="New action name..." style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;flex:1">
+<button class="btn btn-sm btn-primary" onclick="addAction()">Add</button>
+</div>
+</div>
+</div>
+
+<div id="adminCatalog" class="tab-content">
+<div class="card">
+<h2>📦 Items Catalog</h2>
+<div id="catalogStats" style="margin-bottom:12px"></div>
+<p style="font-size:12px;color:var(--text-light);margin-bottom:8px">Upload Excel file with columns: Item, Description, Status (or use the xlsb items sheet)</p>
+<input type="file" id="catalogFileInput" accept=".xlsx,.xls" onchange="handleCatalogUpload(this)">
+<div id="catalogProgress" class="hidden" style="margin-top:12px">
+<div style="background:#E8EDEF;border-radius:6px;height:20px;overflow:hidden">
+<div id="catalogBar" style="height:100%;background:var(--primary);width:0%;transition:width .3s;border-radius:6px"></div>
+</div>
+<p id="catalogText" style="font-size:12px;margin-top:4px;color:var(--text-light)"></p>
+</div>
+</div>
+</div>
+
+<div id="adminBlocked" class="tab-content">
+<div class="card">
+<h2>🚫 Blocked Items (Ranged)</h2>
+<div id="blockedStats" style="margin-bottom:12px"></div>
+<p style="font-size:12px;color:var(--text-light);margin-bottom:8px">Upload Ranged2 text file (Tab-separated: Pharmacy Code, Material Number, Ranged)</p>
+<input type="file" id="rangedFileInput" accept=".txt,.csv" onchange="handleRangedUpload(this)">
+<div id="rangedProgress" class="hidden" style="margin-top:12px">
+<div style="background:#E8EDEF;border-radius:6px;height:20px;overflow:hidden">
+<div id="rangedBar" style="height:100%;background:var(--primary);width:0%;transition:width .3s;border-radius:6px"></div>
+</div>
+<p id="rangedText" style="font-size:12px;margin-top:4px;color:var(--text-light)"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modalOverlay">
+<div class="modal" id="modalContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORES={"P122":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P118":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P314":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P131":{"m":"Dr. Islam El-sokkary","s":"Reem  Eloutibi","a":"TAIF"},"P348":{"m":"Dr. Islam El-sokkary","s":"Reem  Eloutibi","a":"TAIF"},"P428":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P160":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P482":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P095":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P059":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P081":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P030":{"m":"Dr. Islam El-sokkary","s":"Reem  Eloutibi","a":"TAIF"},"P071":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P222":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P328":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P319":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P124":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P085":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P078":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P062":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P316":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P329":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P223":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P127":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P132":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P211":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P061":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P268":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P292":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P161":{"m":"Dr. Islam El-sokkary","s":"Reem  Eloutibi","a":"TAIF"},"P174":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P430":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P299":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P219":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P243":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P134":{"m":"Dr. Islam El-sokkary","s":"Reem  Eloutibi","a":"TAIF"},"P109":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P297":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P269":{"m":"Dr. Islam El-sokkary","s":"Reem  Eloutibi","a":"TAIF"},"P084":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P045":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P053":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P072":{"m":"Dr. Islam El-sokkary","s":"Reem  Eloutibi","a":"TAIF"},"P021":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P220":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P076":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P106":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P173":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P470":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P142":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P086":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P074":{"m":"Dr. Islam El-sokkary","s":"Reem  Eloutibi","a":"TAIF"},"P213":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P066":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P130":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P088":{"m":"Dr. Islam El-sokkary","s":"Reem  Eloutibi","a":"TAIF"},"P140":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P214":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P349":{"m":"Dr. Islam El-sokkary","s":"Reem  Eloutibi","a":"TAIF"},"P133":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P440":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P313":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P067":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P049":{"m":"Dr. Islam El-sokkary","s":"A.Barakat","a":"TAIF"},"P063":{"m":"Dr. Islam El-sokkary","s":"Omar Azazy","a":"TAIF"},"P516":{"m":"Dr. Islam El-sokkary","s":"Yaser Abdul Ati","a":"BAHA"},"P293":{"m":"Dr.Mohamed-Elsayed","s":"Abdallah Maher","a":"BAHA"},"P025":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P016":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P178":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P230":{"m":"Dr.Mohamed-Elsayed","s":"Abdallah Maher","a":"BAHA"},"P336":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P457":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P451":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P479":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P387":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P265":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P371":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P179":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P209":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P332":{"m":"Dr.Mohamed-Elsayed","s":"Abdallah Maher","a":"BAHA"},"P046":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P050":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P176":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P429":{"m":"Dr.Mohamed-Elsayed","s":"Abdallah Maher","a":"BAHA"},"P070":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P175":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P425":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P266":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P337":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P298":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P141":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P495":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P515":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P535":{"m":"Dr.Mohamed-Elsayed","s":"Hamdi Eslam","a":"ABHA"},"P473":{"m":"Dr.Mohamed-Elsayed","s":"Abdallah Maher","a":"BAHA"},"P458":{"m":"Dr.Mohamed-Elsayed","s":"Abdallah Maher","a":"BAHA"},"P239":{"m":"Dr.Mohamed-Elsayed","s":"Abdallah Maher","a":"BAHA"}};
+const CAPTAINS=[{"n":"Fathy Fathy Mohemed Elmesiry","r":"Cash","a":"BAHA","s":"Yaser Abdul Ati"},{"n":"Ahmed Mostafa Hamed Elhayatmy","r":"Insurance","a":"BAHA","s":"Yaser Abdul Ati"},{"n":"Ibrahim Nagah Abdelwanis Hatata","r":"Wasfaty","a":"BAHA","s":"Yaser Abdul Ati"},{"n":"El-sayed  el-kasas","r":"Cash","a":"ABHA","s":"Hamdi Eslam"},{"n":"Mohamed nasha't","r":"Insurance","a":"ABHA","s":"Hamdi Eslam"},{"n":"Moataz salah","r":"Wasfaty","a":"ABHA","s":"Hamdi Eslam"},{"n":"Mahmoud el shiekh","r":"Cash","a":"TAIF","s":"A.Barakat"},{"n":"Mohamed abo el Atta","r":"Insurance","a":"TAIF","s":"A.Barakat"},{"n":"Abdallah abd el Nabi","r":"Wasfaty","a":"TAIF","s":"A.Barakat"},{"n":"Samer Samir","r":"Cash","a":"TAIF","s":"Reem  Eloutibi"},{"n":"Ali sameeh","r":"Insurance","a":"TAIF","s":"Reem  Eloutibi"},{"n":"Mohamed Gamal","r":"Cash","a":"TAIF","s":"Omar Azazy"},{"n":"Eslam ibrahim","r":"Wasfaty","a":"TAIF","s":"Omar Azazy"},{"n":"Ahmed Ezz","r":"Insurance","a":"TAIF","s":"Omar Azazy"},{"n":"Ahmad gamal","r":"Insurance","a":"BISHA","s":"Abdallah Maher"},{"n":"Ahmed saad","r":"Cash","a":"BISHA","s":"Abdallah Maher"},{"n":"Abd elaziz halawa","r":"Cash","a":"ASSIR","s":"Abdallah Maher"},{"n":"Abdelrahman","r":"Wasfaty","a":"TAIF","s":"A.Barakat"}];
+const ITEMS=[];
+const HUBS={"P430":"Med & COS","P222":"Med & COS","P220":"Med","P314":"COS & Diapper & Milk","P297":"ALL","P316":"ALL","P141":"Med","P425":"Med","P266":"Cos","P298":"Cos","P176":"ML - DP","P175":"ML - DP","P429":"All","P293":"All","P130":"Med & COS","P072":"Med & COS","P076":"Med","P213":"ML - DP","P214":"Med & COS","P063":"Med & COS"};
+const SCHEDULE={"P141":["Thursday","Saturday","Tuesday"],"P176":["Saturday","Tuesday"],"P298":["Thursday","Saturday","Tuesday"],"P336":["Saturday","Tuesday"],"P425":["Thursday","Saturday","Tuesday"],"P515":["Saturday","Tuesday"],"P174":["Thursday","Saturday","Tuesday"],"P223":["Saturday","Tuesday"],"P297":["Thursday","Saturday","Tuesday"],"P316":["Thursday","Saturday","Tuesday"],"P328":["Thursday","Saturday","Tuesday"],"P429":["Saturday","Tuesday"],"P430":["Thursday","Saturday","Tuesday"],"P470":["Thursday","Saturday","Tuesday"],"P516":["Saturday","Tuesday"],"P222":["Thursday","Saturday","Tuesday"],"P293":["Thursday","Saturday","Tuesday"],"P219":["Saturday","Tuesday"],"P230":["Saturday","Tuesday"],"P428":["Saturday","Tuesday"],"P332":["Saturday","Tuesday"],"P220":["Thursday","Saturday","Tuesday"],"P299":["Saturday","Tuesday"],"P314":["Saturday","Tuesday"],"P016":["Saturday","Tuesday"],"P025":["Saturday","Tuesday"],"P046":["Saturday","Tuesday"],"P050":["Saturday","Tuesday"],"P070":["Saturday","Tuesday"],"P175":["Thursday","Saturday","Tuesday"],"P178":["Saturday","Tuesday"],"P179":["Saturday","Tuesday"],"P209":["Saturday","Tuesday"],"P265":["Thursday","Saturday","Tuesday"],"P266":["Thursday","Saturday","Tuesday"],"P337":["Saturday","Tuesday"],"P371":["Saturday","Tuesday"],"P451":["Saturday","Tuesday"],"P457":["Thursday","Saturday","Tuesday"],"P479":["Saturday","Tuesday"],"P495":["Saturday","Tuesday"],"P387":["Saturday","Tuesday"],"P021":["Friday","Monday"],"P030":["Thursday","Sunday"],"P045":["Thursday","Sunday"],"P049":["Thursday","Saturday","Tuesday"],"P053":["Friday","Monday"],"P059":["Saturday","Tuesday"],"P061":["Thursday","Sunday"],"P062":["Saturday","Tuesday"],"P063":["Thursday","Sunday","Tuesday"],"P066":["Thursday","Sunday"],"P067":["Thursday","Saturday","Tuesday"],"P071":["Saturday","Tuesday"],"P072":["Thursday","Saturday","Tuesday"],"P074":["Thursday","Saturday","Tuesday"],"P076":["Thursday","Saturday","Tuesday"],"P078":["Friday","Monday"],"P081":["Thursday","Sunday"],"P084":["Thursday","Sunday"],"P085":["Thursday","Sunday"],"P086":["Thursday","Sunday","Tuesday"],"P088":["Thursday","Saturday","Tuesday"],"P095":["Thursday","Sunday"],"P106":["Thursday","Sunday"],"P109":["Thursday","Sunday"],"P118":["Thursday","Sunday"],"P122":["Saturday","Tuesday"],"P124":["Saturday","Tuesday"],"P127":["Thursday","Saturday","Tuesday"],"P130":["Thursday","Saturday","Tuesday"],"P131":["Saturday","Tuesday"],"P132":["Saturday","Tuesday"],"P133":["Thursday","Saturday","Tuesday"],"P134":["Saturday","Tuesday"],"P140":["Saturday","Tuesday"],"P142":["Friday","Monday"],"P160":["Thursday","Sunday"],"P161":["Thursday","Saturday","Tuesday"],"P173":["Thursday","Sunday","Tuesday"],"P211":["Saturday","Tuesday"],"P213":["Thursday","Sunday"],"P214":["Thursday","Sunday","Tuesday"],"P243":["Thursday","Sunday","Tuesday"],"P268":["Thursday","Sunday"],"P269":["Thursday","Sunday"],"P292":["Thursday","Sunday"],"P313":["Thursday","Sunday","Tuesday"],"P319":["Thursday","Sunday"],"P329":["Thursday","Saturday","Tuesday"],"P348":["Thursday","Sunday"],"P349":["Saturday","Tuesday"],"P440":["Thursday","Saturday","Tuesday"],"P482":["Thursday","Sunday"]};
+const SUP_STORES={"A.Barakat":["P122","P095","P059","P319","P124","P085","P078","P127","P132","P211","P061","P045","P053","P076","P086","P130","P140","P214","P440","P067","P049"],"Omar Azazy":["P118","P160","P482","P081","P071","P062","P329","P268","P292","P243","P109","P084","P021","P106","P173","P142","P213","P066","P133","P313","P063"],"Yaser Abdul Ati":["P314","P428","P222","P328","P316","P223","P174","P430","P299","P219","P297","P220","P470","P516"],"Reem  Eloutibi":["P131","P348","P030","P161","P134","P269","P072","P074","P088","P349"],"Abdallah Maher":["P293","P230","P332","P429"],"Hamdi Eslam":["P025","P016","P178","P336","P457","P451","P479","P387","P265","P371","P179","P209","P046","P050","P176","P070","P175","P425","P266","P337","P298","P141","P495","P515","P535"]};
+const AREA_STORES={"TAIF":["P122","P118","P131","P348","P160","P482","P095","P059","P081","P030","P071","P319","P124","P085","P078","P062","P329","P127","P132","P211","P061","P268","P292","P161","P243","P134","P109","P269","P084","P045","P053","P072","P021","P076","P106","P173","P142","P086","P074","P213","P066","P130","P088","P140","P214","P349","P133","P440","P313","P067","P049","P063"],"BAHA":["P314","P428","P222","P328","P316","P223","P174","P430","P299","P219","P297","P220","P470","P516","P293","P230","P332","P429"],"ABHA":["P025","P016","P178","P336","P457","P451","P479","P387","P265","P371","P179","P209","P046","P050","P176","P070","P175","P425","P266","P337","P298","P141","P495","P515","P535"]};
+const EXCLUDED_STORES=new Set(["P458","P473","P239"]);
+const AREAS=["ABHA","BAHA","TAIF"];
+const SALES_TYPES=["Cash","Insurance","Wasfaty"];
+const FEEDBACK_OPTIONS=["High Demand","Contract","New Item","Competition","Other"];
+
+// ===== CONFIG =====
+const SUPABASE_URL="https://iejniddlvasbjoojdwnf.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_y6ptD2b5q-GR6LBJOperOg_LWDkNcEb";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+// ===== STATE =====
+let currentUser=null;
+let allData=[];
+let _adminCache=null,_supCache=null,_mgrCache=null;
+let _autoFilter=true;
+let uploadRows=[];
+let actionUploadRows=[];
+let selectedIds=new Set();
+
+// Default actions
+let ACTION_TYPES=["Pending","Blocked Items","Delisted Items","Unicharm","Not Available","Onhand Available","Issued by DIM"];
+
+
+// Normalize submission row — handle column name differences between old/new data
+function normalizeRow(r){
+  // DB column is item_code — map to item for display
+  if(r.item===undefined||r.item===null) r.item=r.item_code||'';
+  if(!r.action) r.action='';
+  return r;
+}
+function normalizeRows(rows){return rows.map(normalizeRow)}
+
+// ===== HELPERS =====
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+
+function toast(msg,type='success'){
+  const t=$('#toast');
+  t.className='toast toast-'+type+' show';
+  t.textContent=msg;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function showModal(html){
+  $('#modalContent').innerHTML=html;
+  $('#modalOverlay').classList.add('show');
+}
+function hideModal(){$('#modalOverlay').classList.remove('show')}
+
+function switchTab(el,id){
+  el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const parent=el.closest('.container')||el.closest('#portalAdmin .container');
+  if(parent) parent.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  else document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  const target=document.getElementById(id);
+  if(target) target.classList.add('active');
+  // Refresh data on tab switch
+  if(id==='adminDash') loadDashboard();
+  if(id==='adminData') loadAdminData();
+  if(id==='adminUsers') loadUsers();
+  if(id==='adminActions') renderActions();
+  if(id==='adminBlocked') loadBlockedStats();
+  if(id==='adminCatalog') loadCatalogStats();
+  if(id==='captainHistory') loadCaptainHistory();
+  if(id==='captainSchedule') loadScheduleTable();
+}
+
+// Supabase pagination helper
+async function supaFetchAll(table,query=''){
+  let all=[];
+  let from=0;
+  const batch=1000;
+  while(true){
+    const url=`${SUPABASE_URL}/rest/v1/${table}?${query}`;
+    const res=await fetch(url,{
+      headers:{
+        'apikey':SUPABASE_ANON_KEY,
+        'Authorization':'Bearer '+SUPABASE_ANON_KEY,
+        'Range':from+'-'+(from+batch-1),
+        'Prefer':'count=exact'
+      }
+    });
+    const rows=await res.json();
+    if(!Array.isArray(rows)) break;
+    all=all.concat(rows);
+    if(rows.length<batch) break;
+    from+=batch;
+  }
+  return all;
+}
+
+async function supaInsert(table,rows){
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/${table}`,{
+    method:'POST',
+    headers:{
+      'apikey':SUPABASE_ANON_KEY,
+      'Authorization':'Bearer '+SUPABASE_ANON_KEY,
+      'Content-Type':'application/json',
+      'Prefer':'return=minimal'
+    },
+    body:JSON.stringify(rows)
+  });
+  if(!res.ok) throw new Error(await res.text());
+  return true;
+}
+
+async function supaUpdate(table,match,data){
+  let query=Object.entries(match).map(([k,v])=>k+'=eq.'+encodeURIComponent(v)).join('&');
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`,{
+    method:'PATCH',
+    headers:{
+      'apikey':SUPABASE_ANON_KEY,
+      'Authorization':'Bearer '+SUPABASE_ANON_KEY,
+      'Content-Type':'application/json',
+      'Prefer':'return=minimal'
+    },
+    body:JSON.stringify(data)
+  });
+  if(!res.ok) throw new Error(await res.text());
+}
+
+async function supaDelete(table,ids){
+  const idStr=ids.map(i=>`"${i}"`).join(',');
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=in.(${idStr})`,{
+    method:'DELETE',
+    headers:{
+      'apikey':SUPABASE_ANON_KEY,
+      'Authorization':'Bearer '+SUPABASE_ANON_KEY,
+      'Prefer':'return=minimal'
+    }
+  });
+  if(!res.ok) throw new Error(await res.text());
+}
+
+// SHA-256 hash
+async function sha256(msg){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ===== AUTH =====
+async function init(){
+  try{
+    const users=await supaFetchAll('app_users','select=username,display_name,role&order=role.asc,display_name.asc');
+    const sel=$('#loginUser');
+    sel.innerHTML='<option value="">Select user...</option>';
+    const groups={admin:[],manager:[],supervisor:[],captain:[]};
+    users.forEach(u=>{if(groups[u.role]) groups[u.role].push(u)});
+    const labels={admin:'Admin',manager:'Managers',supervisor:'Supervisors',captain:'Captains'};
+    Object.entries(groups).forEach(([role,list])=>{
+      if(!list.length) return;
+      const og=document.createElement('optgroup');
+      og.label=labels[role];
+      list.forEach(u=>{
+        const opt=document.createElement('option');
+        opt.value=u.username;
+        opt.textContent=u.display_name;
+        og.appendChild(opt);
+      });
+      sel.appendChild(og);
+    });
+  }catch(e){
+    console.error('Init failed:',e);
+  }
+  const saved=sessionStorage.getItem('sfUser');
+  if(saved){
+    try{currentUser=JSON.parse(saved);showPortal()}catch(e){sessionStorage.removeItem('sfUser')}
+  }
+}
+
+async function doLogin(){
+  const username=$('#loginUser').value;
+  const password=$('#loginPass').value;
+  if(!username){$('#loginError').style.display='block';$('#loginError').textContent='Select a user';return}
+  if(!password){$('#loginError').style.display='block';$('#loginError').textContent='Enter password';return}
+  try{
+    const hash=await sha256(password);
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/app_users?username=eq.${encodeURIComponent(username)}&password_hash=eq.${hash}&select=*`,{
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+    });
+    const users=await res.json();
+    if(!users.length){$('#loginError').style.display='block';$('#loginError').textContent='Wrong password';return}
+    currentUser=users[0];
+    sessionStorage.setItem('sfUser',JSON.stringify(currentUser));
+    showPortal();
+  }catch(e){
+    $('#loginError').style.display='block';$('#loginError').textContent='Connection error';
+  }
+}
+
+function doLogout(){
+  currentUser=null;
+  sessionStorage.removeItem('sfUser');
+  $('#mainApp').classList.add('hidden');
+  $('#loginScreen').classList.remove('hidden');
+  ['portalCaptain','portalSupervisor','portalManager','portalAdmin'].forEach(id=>$('#'+id).classList.add('hidden'));
+}
+
+function showPortal(){
+  $('#loginScreen').classList.add('hidden');
+  $('#mainApp').classList.remove('hidden');
+  $('#userDisplayName').textContent=currentUser.display_name;
+  $('#userRoleBadge').textContent=currentUser.role.toUpperCase();
+  
+  const role=currentUser.role;
+  ['portalCaptain','portalSupervisor','portalManager','portalAdmin'].forEach(id=>$('#'+id).classList.add('hidden'));
+  
+  if(role==='captain') {$('#portalCaptain').classList.remove('hidden');initCaptainPortal()}
+  else if(role==='supervisor'){$('#portalSupervisor').classList.remove('hidden');initSupPortal()}
+  else if(role==='manager'){$('#portalManager').classList.remove('hidden');initMgrPortal()}
+  else if(role==='admin'){$('#portalAdmin').classList.remove('hidden');initAdminPortal()}
+}
+
+function showChangePassword(){
+  showModal(`<h3>Change Password</h3>
+    <div class="form-group" style="margin-bottom:12px"><label>Current Password</label><input type="password" id="cpOld"></div>
+    <div class="form-group" style="margin-bottom:12px"><label>New Password</label><input type="password" id="cpNew"></div>
+    <div class="form-group" style="margin-bottom:16px"><label>Confirm New Password</label><input type="password" id="cpConfirm"></div>
+    <div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="changePassword()">Change</button><button class="btn btn-secondary" onclick="hideModal()">Cancel</button></div>`);
+}
+
+async function changePassword(){
+  const old=$('#cpOld').value,nw=$('#cpNew').value,cf=$('#cpConfirm').value;
+  if(!old||!nw){toast('Fill all fields','error');return}
+  if(nw!==cf){toast('Passwords don\'t match','error');return}
+  if(nw.length<4){toast('Min 4 characters','error');return}
+  const oldHash=await sha256(old);
+  if(oldHash!==currentUser.password_hash){toast('Wrong current password','error');return}
+  const newHash=await sha256(nw);
+  await supaUpdate('app_users',{id:currentUser.id},{password_hash:newHash});
+  currentUser.password_hash=newHash;
+  sessionStorage.setItem('sfUser',JSON.stringify(currentUser));
+  hideModal();
+  toast('Password changed!');
+}
+
+// ===== ITEM SEARCH =====
+let searchTimeout=null;
+function searchItems(input,ddId,mode='code'){
+  clearTimeout(searchTimeout);
+  searchTimeout=setTimeout(async()=>{
+    const q=input.value.trim();
+    const dd=$('#'+ddId);
+    if(q.length<2){dd.classList.remove('show');return}
+    try{
+      // Search via Supabase items_catalog
+      const isNum=/^\d+$/.test(q);
+      let query;
+      if(isNum){
+        query=`item_code=like.*${q}*&limit=30&select=item_code,description,status`;
+      }else{
+        query=`or=(item_code.ilike.*${encodeURIComponent(q)}*,description.ilike.*${encodeURIComponent(q)}*)&limit=30&select=item_code,description,status`;
+      }
+      const res=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?${query}`,{
+        headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+      });
+      const matches=await res.json();
+      if(!Array.isArray(matches)||!matches.length){
+        dd.innerHTML='<div class="dd-item" style="color:var(--text-light)">No results — you can type the code manually</div>';
+        dd.classList.add('show');
+        return;
+      }
+      dd.innerHTML=matches.map(item=>{
+        const status=item.status||'';
+        let tagHtml='';
+        if(status==='SPECIAL ITEM') tagHtml='<span class="tag tag-special">Special</span>';
+        else if(status==='DELISTED ITEM') tagHtml='<span class="tag tag-delisted">Delisted</span>';
+        else if(status==='UNICHARM') tagHtml='<span class="tag tag-unicharm">Unicharm</span>';
+        else if(status==='DEVICES') tagHtml='<span class="tag tag-devices">Devices</span>';
+        return `<div class="dd-item" onclick="selectItem('${item.item_code}','${(item.description||'').replace(/'/g,"\\'")}','${status}')"><span class="code">${item.item_code}</span> <span class="desc">${item.description}</span>${tagHtml}</div>`;
+      }).join('');
+      dd.classList.add('show');
+    }catch(e){
+      console.error('Search error:',e);
+      dd.innerHTML='<div class="dd-item" style="color:var(--text-light)">Search error — type code manually</div>';
+      dd.classList.add('show');
+    }
+  },300);
+}
+
+function selectItem(code,desc,status){
+  $('#entryItem').value=code;
+  $('#entryDesc').value=desc;
+  $('#entryItemDD').classList.remove('show');
+  $('#entryDescDD').classList.remove('show');
+  showItemStatusBadge(status);
+}
+
+function showItemStatusBadge(status){
+  const badge=$('#itemStatusBadge');
+  if(!badge) return;
+  if(status&&status!=='REGULAR'){
+    let cls='tag-special',label=status;
+    if(status==='SPECIAL ITEM'){cls='tag-special';label='⚠ Special Item'}
+    else if(status==='DELISTED ITEM'){cls='tag-delisted';label='🚫 Delisted Item'}
+    else if(status==='UNICHARM'){cls='tag-unicharm';label='🔵 Unicharm'}
+    else if(status==='DEVICES'){cls='tag-devices';label='🔧 Devices'}
+    badge.innerHTML=`<span class="tag ${cls}" style="font-size:12px;padding:3px 10px">${label}</span>`;
+    badge.style.display='block';
+  }else{
+    badge.innerHTML='';badge.style.display='none';
+  }
+}
+
+// Look up a single item by exact code from Supabase
+async function lookupItemByCode(code){
+  if(!code) return null;
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?item_code=eq.${encodeURIComponent(code)}&select=item_code,description,status&limit=1`,{
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+    });
+    const rows=await res.json();
+    return (Array.isArray(rows)&&rows.length)?rows[0]:null;
+  }catch(e){return null}
+}
+
+// When user finishes typing/pasting a code in the Item Code field → auto-fill description
+let codeCheckTimeout=null;
+async function onItemCodeInput(){
+  const code=$('#entryItem').value.trim();
+  clearTimeout(codeCheckTimeout);
+  // Still show the search dropdown for partial typing
+  searchItems($('#entryItem'),'entryItemDD');
+  // If it looks like a complete numeric code, try exact lookup
+  if(/^\d{4,}$/.test(code)){
+    codeCheckTimeout=setTimeout(async()=>{
+      const item=await lookupItemByCode(code);
+      if(item){
+        $('#entryDesc').value=item.description||'';
+        showItemStatusBadge(item.status||'');
+        $('#entryItemDD').classList.remove('show');
+      }
+    },400);
+  }
+}
+
+// ===== CAPTAIN PORTAL =====
+let captainArea='';
+let captainStores=[];
+
+function normName(n){return(n||'').toLowerCase().replace(/\s+/g,' ').trim()}
+
+function initCaptainPortal(){
+  // Find captain's area — case-insensitive fuzzy match
+  const myName=normName(currentUser.display_name);
+  const capMatch=CAPTAINS.find(c=>normName(c.n)===myName);
+  
+  // Area: user record first, then CAPTAINS match, then empty
+  captainArea=currentUser.area||(capMatch?capMatch.a:'')||'';
+  
+  // Get stores by area
+  captainStores=AREA_STORES[captainArea]||[];
+  
+  // Fallback 1: supervisor stores
+  if(!captainStores.length){
+    const sup=currentUser.supervisor||(capMatch?capMatch.s:'')||'';
+    if(sup) captainStores=SUP_STORES[sup]||[];
+  }
+  
+  // Fallback 2: ALL stores (so captain is never stuck with empty list)
+  if(!captainStores.length){
+    captainStores=Object.keys(STORES).filter(s=>!EXCLUDED_STORES.has(s));
+    console.warn('Captain not matched to area/supervisor — showing all stores');
+  }
+  
+  captainStores.sort();
+  
+  // Auto-fill area
+  $('#entryArea').value=captainArea;
+  $('#entryStore').value='';
+  
+  // Populate feedback dropdown
+  const fbSel=$('#entryFeedback');
+  fbSel.innerHTML='<option value="">Select...</option>';
+  FEEDBACK_OPTIONS.forEach(f=>{
+    const opt=document.createElement('option');
+    opt.value=f;opt.textContent=f;
+    fbSel.appendChild(opt);
+  });
+  
+  // Sales type
+  let salesType=currentUser.sales_type||currentUser.responsibility||'';
+  if(!salesType&&capMatch) salesType=capMatch.r;
+  $('#entrySalesType').value=salesType;
+  
+  // Load schedule tab
+  loadScheduleTable();
+}
+
+// Store search (searchable input)
+function searchStores(input){
+  const q=input.value.trim().toUpperCase();
+  const dd=$('#entryStoreDD');
+  
+  let matches=captainStores;
+  if(q.length>0){
+    matches=captainStores.filter(code=>code.includes(q));
+  }
+  
+  if(!matches.length){dd.innerHTML='<div class="dd-item" style="color:var(--text-light)">No stores found</div>';dd.classList.add('show');return}
+  
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long'});
+  dd.innerHTML=matches.map(code=>{
+    const days=SCHEDULE[code]||[];
+    const isToday=days.includes(today);
+    const hub=HUBS[code]?` <span style="color:var(--primary);font-size:10px">[Hub]</span>`:'';
+    const todayMark=isToday?' <span style="color:var(--success);font-size:10px;font-weight:600">● Order Today</span>':'';
+    return `<div class="dd-item" onclick="selectStore('${code}')"><span class="code">${code}</span>${hub}${todayMark}</div>`;
+  }).join('');
+  dd.classList.add('show');
+}
+
+function selectStore(code){
+  $('#entryStore').value=code;
+  $('#entryStoreDD').classList.remove('show');
+  onStoreChange();
+}
+
+function loadScheduleTable(){
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long'});
+  const tbl=$('#scheduleTable');
+  if(!tbl) return;
+  
+  let rows='';
+  captainStores.forEach(code=>{
+    const days=SCHEDULE[code]||[];
+    const isToday=days.includes(today);
+    const hub=HUBS[code]||'';
+    rows+=`<tr class="${isToday?'order-today':''}"><td style="font-weight:600">${code}</td><td>${hub||'—'}</td><td>${days.join(', ')||'N/A'}</td><td>${isToday?'<span style="color:var(--success);font-weight:600">✅ Today</span>':''}</td></tr>`;
+  });
+  
+  tbl.innerHTML=`<thead><tr><th>Store</th><th>Hub</th><th>Order Days</th><th></th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function onStoreChange(){
+  const code=$('#entryStore').value.trim().toUpperCase();
+  if(!code||!STORES[code]){$('#entryHub').value='';$('#entryOrderDays').value='';return}
+  const info=STORES[code]||{};
+  if(!captainArea) $('#entryArea').value=info.a||'';
+  $('#entryHub').value=HUBS[code]||'—';
+  const days=SCHEDULE[code]||[];
+  $('#entryOrderDays').value=days.join(', ')||'N/A';
+}
+
+function onFeedbackChange(){
+  const v=$('#entryFeedback').value;
+  $('#otherFeedbackGroup').style.display=(v==='Other')?'flex':'none';
+  if(v!=='Other') $('#entryFeedbackOther').value='';
+}
+
+function resetEntry(){
+  ['entryStore','entryItem','entryDesc','entryQty','entryOnhand','entryFeedback','entryFeedbackOther'].forEach(id=>{
+    const el=$('#'+id);if(el)el.value='';
+  });
+  $('#entryArea').value=captainArea||'';$('#entryHub').value='';$('#entryOrderDays').value='';
+  $('#otherFeedbackGroup').style.display='none';
+  const badge=$('#itemStatusBadge');if(badge){badge.innerHTML='';badge.style.display='none';}
+}
+
+async function detectAction(storeCode,itemCode){
+  // Check item status from Supabase catalog
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?item_code=eq.${encodeURIComponent(itemCode)}&select=status&limit=1`,{
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+    });
+    const items=await res.json();
+    if(items.length){
+      const status=items[0].status||'';
+      if(status==='SPECIAL ITEM') return 'Blocked Items';
+      if(status==='DELISTED ITEM') return 'Delisted Items';
+      if(status==='UNICHARM') return 'Unicharm';
+    }
+  }catch(e){}
+  // Check blocked_items table (Ranged2)
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/blocked_items?store_code=eq.${encodeURIComponent(storeCode)}&material_code=eq.${encodeURIComponent(itemCode)}&select=material_code&limit=1`,{
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+    });
+    const rows=await res.json();
+    if(Array.isArray(rows)&&rows.length>0) return 'Blocked Items';
+  }catch(e){}
+  return '';
+}
+
+async function checkDuplicate(store,item){
+  try{
+    // Fetch rows for this store+item and check if any is currently pending
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/submissions?store=eq.${encodeURIComponent(store)}&item_code=eq.${encodeURIComponent(item)}&select=action`,{
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+    });
+    const rows=await res.json();
+    if(Array.isArray(rows)){
+      const hasPending=rows.some(r=>!r.action||r.action.trim()==='');
+      if(hasPending) return 'This item already has a pending submission for this store';
+    }
+    // Actioned items (any date) can be re-submitted — no block
+  }catch(e){}
+  return null;
+}
+
+async function submitEntry(){
+  const store=$('#entryStore').value.trim().toUpperCase();
+  const item=$('#entryItem').value.trim();
+  const desc=$('#entryDesc').value.trim();
+  const qty=$('#entryQty').value;
+  const onhand=$('#entryOnhand').value;
+  const feedback=$('#entryFeedback').value;
+  const feedbackOther=$('#entryFeedbackOther').value.trim();
+  
+  if(!store||!STORES[store]){toast('Enter a valid store code','error');return}
+  if(!item){toast('Enter item code','error');return}
+  if(!qty||parseInt(qty)<1){toast('Quantity is required','error');return}
+  if(!feedback){toast('Select feedback','error');return}
+  if(feedback==='Other'&&!feedbackOther){toast('Specify feedback details','error');return}
+  
+  // Duplicate check
+  const dup=await checkDuplicate(store,item);
+  if(dup){toast(dup,'warning');return}
+  
+  // Auto-detect action
+  const action=await detectAction(store,item);
+  
+  const info=STORES[store]||{};
+  const feedbackVal=feedback==='Other'?'Other: '+feedbackOther:feedback;
+  
+  const row={
+    store:store,
+    item_code:item,
+    description:desc,
+    quantity:parseInt(qty),
+    physical_onhand:onhand?parseInt(onhand):null,
+    scenario:feedbackVal,
+    feedback:feedbackVal,
+    area:info.a||'',
+    hub:HUBS[store]||'',
+    sales_type:currentUser.sales_type||currentUser.responsibility||(CAPTAINS.find(c=>c.n===currentUser.display_name)||{}).r||'',
+    captain:currentUser.display_name,
+    supervisor:info.s||'',
+    manager:info.m||'',
+    action:action,
+    action_notes:'',
+    action_by:action?'Auto':'',
+    action_date:action?new Date().toISOString():null
+  };
+  
+  try{
+    await supaInsert('submissions',[row]);
+    toast(action?'Submitted! Auto-action: '+action:'Submitted successfully!');
+    resetEntry();
+  }catch(e){
+    toast('Error: '+e.message,'error');
+  }
+}
+
+// ===== BULK UPLOAD =====
+function downloadTemplate(){
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([['Store','Item','Description','Quantity','Physical Onhand','Feedback']]);
+  XLSX.utils.book_append_sheet(wb,ws,'Template');
+  XLSX.writeFile(wb,'feedback_template.xlsx');
+}
+
+function handleFileUpload(input){
+  if(!input.files.length) return;
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      if(rows.length<2){toast('File is empty','error');return}
+      
+      const header=rows[0].map(h=>String(h||'').trim().toLowerCase());
+      const storeIdx=header.findIndex(h=>h.includes('store'));
+      const itemIdx=header.findIndex(h=>h.includes('item')&&!h.includes('desc')&&!h.includes('onhand'));
+      const descIdx=header.findIndex(h=>h.includes('desc'));
+      const qtyIdx=header.findIndex(h=>h.includes('qty')||h.includes('quantity'));
+      const onhandIdx=header.findIndex(h=>h.includes('onhand')||h.includes('physical'));
+      const fbIdx=header.findIndex(h=>h.includes('feedback')||h.includes('scenario'));
+      
+      uploadRows=[];
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i];
+        if(!r||r.every(c=>!c)) continue;
+        const store=storeIdx>=0?String(r[storeIdx]||'').trim().toUpperCase():'';
+        const item=itemIdx>=0?String(r[itemIdx]||'').replace(/\.0$/,'').trim():'';
+        const desc=descIdx>=0?String(r[descIdx]||'').trim():'';
+        const qty=qtyIdx>=0?parseInt(r[qtyIdx])||0:0;
+        const onhand=onhandIdx>=0?parseInt(r[onhandIdx])||null:null;
+        const fb=fbIdx>=0?String(r[fbIdx]||'').trim():'';
+        uploadRows.push({store,item,desc,qty,onhand,feedback:fb,errors:[]});
+      }
+      
+      // Auto-fill missing descriptions from catalog (batched lookup by code)
+      const needDesc=[...new Set(uploadRows.filter(r=>r.item&&!r.desc).map(r=>r.item))];
+      if(needDesc.length){
+        toast('Looking up item names...','warning');
+        const descMap={};
+        // Batch in groups of 100 codes
+        for(let i=0;i<needDesc.length;i+=100){
+          const batch=needDesc.slice(i,i+100);
+          const inList=batch.map(c=>`"${c}"`).join(',');
+          try{
+            const res=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?item_code=in.(${inList})&select=item_code,description`,{
+              headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+            });
+            const found=await res.json();
+            if(Array.isArray(found)) found.forEach(it=>{descMap[it.item_code]=it.description});
+          }catch(e){}
+        }
+        uploadRows.forEach(r=>{if(!r.desc&&descMap[r.item]) r.desc=descMap[r.item]});
+      }
+      
+      // Validate
+      uploadRows.forEach(r=>{
+        const err=[];
+        if(!r.store) err.push('No store');
+        else if(!STORES[r.store]) err.push('Invalid store');
+        if(!r.item) err.push('No item');
+        if(!r.qty||r.qty<1) err.push('No quantity');
+        if(!r.feedback) err.push('No feedback');
+        r.errors=err;
+      });
+      
+      // Show preview
+      const tbl=$('#uploadTable');
+      tbl.innerHTML='<thead><tr><th>#</th><th>Store</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Onhand</th><th>Feedback</th><th>Status</th></tr></thead><tbody>'+
+        uploadRows.map((r,i)=>`<tr style="${r.errors.length?'background:#FEF2F2':''}"><td>${i+1}</td><td>${r.store}</td><td>${r.item}</td><td>${r.desc||'<span style="color:#999">—</span>'}</td><td>${r.qty}</td><td>${r.onhand||''}</td><td>${r.feedback}</td><td style="font-size:11px">${r.errors.length?'❌ '+r.errors.join(', '):'✅'}</td></tr>`).join('')+
+        '</tbody>';
+      $('#uploadPreview').classList.remove('hidden');
+    }catch(err){toast('Error reading file: '+err.message,'error')}
+  };
+  reader.readAsArrayBuffer(input.files[0]);
+}
+
+async function confirmUpload(){
+  const valid=uploadRows.filter(r=>!r.errors.length);
+  if(!valid.length){toast('No valid rows to upload','error');return}
+  
+  // Show progress
+  const btn=document.querySelector('#uploadPreview .btn-primary');
+  const origText=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Processing…'}
+  
+  try{
+    const salesType=currentUser.sales_type||currentUser.responsibility||(CAPTAINS.find(c=>c.n===currentUser.display_name)||{}).r||'';
+    const captain=currentUser.display_name;
+    
+    // ===== STEP 1: Get item statuses from catalog (batched by code) =====
+    if(btn) btn.textContent='Checking item statuses…';
+    const allCodes=[...new Set(valid.map(r=>r.item))];
+    const statusMap={};  // code → status
+    for(let i=0;i<allCodes.length;i+=150){
+      const batch=allCodes.slice(i,i+150);
+      const inList=batch.map(c=>`"${c}"`).join(',');
+      try{
+        const res=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?item_code=in.(${inList})&select=item_code,status`,{
+          headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+        });
+        const found=await res.json();
+        if(Array.isArray(found)) found.forEach(it=>{statusMap[it.item_code]=it.status});
+      }catch(e){}
+    }
+    
+    // ===== STEP 2: Get blocked (ranged) items per store — batched =====
+    if(btn) btn.textContent='Checking blocked items…';
+    const stores=[...new Set(valid.map(r=>r.store))];
+    const blockedSet=new Set();  // "store|code"
+    let blockedTableOk=true;
+    for(const store of stores){
+      try{
+        // Fetch ALL blocked material numbers for this store (paginated, short URL)
+        const storeBlockedCodes=new Set();
+        let from=0;const pageSize=1000;
+        while(true){
+          const res=await fetch(`${SUPABASE_URL}/rest/v1/blocked_items?store_code=eq.${encodeURIComponent(store)}&select=material_code`,{
+            headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Range':from+'-'+(from+pageSize-1)}
+          });
+          if(!res.ok){blockedTableOk=false;break}
+          const found=await res.json();
+          if(!Array.isArray(found)||!found.length) break;
+          found.forEach(b=>storeBlockedCodes.add(String(b.material_code).trim()));
+          if(found.length<pageSize) break;
+          from+=pageSize;
+        }
+        // Match uploaded codes against this store's blocked set
+        const codesForStore=valid.filter(r=>r.store===store).map(r=>String(r.item).trim());
+        codesForStore.forEach(code=>{
+          if(storeBlockedCodes.has(code)) blockedSet.add(store+'|'+code);
+        });
+      }catch(e){blockedTableOk=false;console.error('Blocked check error for',store,e)}
+    }
+    console.log('PULSE upload: blocked matches =',blockedSet.size,'| blocked table OK:',blockedTableOk);
+    if(!blockedTableOk) console.warn('PULSE: blocked_items table not accessible');
+    
+    // ===== STEP 3: Get existing PENDING duplicates per store — fetch all, filter in JS =====
+    if(btn) btn.textContent='Checking duplicates…';
+    const dupSet=new Set();  // "store|code" that is currently PENDING → skip
+    for(const store of stores){
+      try{
+        // Only fetch PENDING rows for this store (action is empty/null)
+        const res=await fetch(`${SUPABASE_URL}/rest/v1/submissions?store=eq.${encodeURIComponent(store)}&select=item_code,action`,{
+          headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+        });
+        const existing=await res.json();
+        if(Array.isArray(existing)){
+          existing.forEach(row=>{
+            const code=String(row.item_code||'').trim();
+            if(!code) return;
+            const hasAction=row.action&&row.action.trim()!=='';
+            // Skip ONLY if currently pending. Actioned items (any date) can be re-submitted.
+            if(!hasAction) dupSet.add(store+'|'+code);
+          });
+        }
+      }catch(e){console.error('Dup check error for',store,e)}
+    }
+    console.log('PULSE upload: existing PENDING duplicates =',dupSet.size);
+    console.log('PULSE upload: sample dupSet keys =',[...dupSet].slice(0,10));
+    
+    // ===== STEP 4: Build rows, detect action, skip duplicates =====
+    const now=new Date().toISOString();
+    const toInsert=[];
+    let skipped=0;
+    for(const r of valid){
+      const key=r.store+'|'+String(r.item).trim();
+      if(dupSet.has(key)){skipped++;continue}
+      
+      // Detect action from status + blocked set
+      let action='';
+      const status=statusMap[r.item]||'';
+      if(status==='SPECIAL ITEM') action='Blocked Items';
+      else if(status==='DELISTED ITEM') action='Delisted Items';
+      else if(status==='UNICHARM') action='Unicharm';
+      else if(blockedSet.has(key)) action='Blocked Items';
+      
+      const info=STORES[r.store]||{};
+      toInsert.push({
+        store:r.store,item_code:r.item,description:r.desc,
+        quantity:r.qty,physical_onhand:r.onhand,
+        scenario:r.feedback,feedback:r.feedback,
+        area:info.a||'',hub:HUBS[r.store]||'',
+        sales_type:salesType,captain:captain,
+        supervisor:info.s||'',manager:info.m||'',
+        action:action,action_notes:'',
+        action_by:action?'Auto':'',
+        action_date:action?now:null
+      });
+    }
+    
+    console.log('PULSE upload: valid rows =',valid.length,'| to insert =',toInsert.length,'| skipped as duplicate =',skipped);
+    if(skipped>0){
+      const skippedSamples=valid.filter(r=>dupSet.has(r.store+'|'+String(r.item).trim())).slice(0,10).map(r=>r.store+'|'+r.item);
+      console.log('PULSE upload: sample skipped items =',skippedSamples);
+    }
+    
+    if(!toInsert.length){
+      toast(`All ${skipped} rows were flagged as duplicates. Check console (F12) for details.`,'warning');
+      if(btn){btn.disabled=false;btn.textContent=origText}
+      return;
+    }
+    
+    // ===== STEP 5: Bulk insert in batches of 200 =====
+    let inserted=0;
+    for(let i=0;i<toInsert.length;i+=200){
+      const batch=toInsert.slice(i,i+200);
+      if(btn) btn.textContent=`Uploading ${Math.min(i+200,toInsert.length)}/${toInsert.length}…`;
+      await supaInsert('submissions',batch);
+      inserted+=batch.length;
+    }
+    
+    const withAction=toInsert.filter(r=>r.action).length;
+    toast(`✅ Uploaded ${inserted} items${withAction?' ('+withAction+' auto-actioned)':''}${skipped?', '+skipped+' duplicates skipped':''}`);
+    if(btn){btn.disabled=false;btn.textContent=origText}
+    cancelUpload();
+  }catch(e){
+    toast('Upload error: '+e.message,'error');
+    if(btn){btn.disabled=false;btn.textContent=origText}
+  }
+}
+
+function cancelUpload(){
+  uploadRows=[];
+  $('#uploadPreview').classList.add('hidden');
+  $('#fileInput').value='';
+}
+
+// ===== CAPTAIN HISTORY =====
+let captHistData=[];
+
+async function loadCaptainHistory(){
+  let query=`captain=eq.${encodeURIComponent(currentUser.display_name)}&order=created_at.desc`;
+  const action=$('#captHistAction').value;
+  if(action==='__pending') query+='&action=eq.';
+  else if(action==='__has') query+='&action=neq.&action=not.is.null';
+  else if(action) query+='&action=eq.'+encodeURIComponent(action);
+  
+  const from=$('#captHistFrom').value;
+  const to=$('#captHistTo').value;
+  if(from) query+='&created_at=gte.'+from+'T00:00:00';
+  if(to) query+='&created_at=lte.'+to+'T23:59:59';
+  
+  const data=normalizeRows(await supaFetchAll('submissions',query));
+  captHistData=data;
+  
+  // Stats
+  const pending=data.filter(r=>!r.action).length;
+  const actioned=data.filter(r=>r.action).length;
+  $('#captHistStats').innerHTML=`
+    <div class="kpi"><div class="num">${data.length}</div><div class="lbl">Total</div></div>
+    <div class="kpi"><div class="num">${pending}</div><div class="lbl">Pending</div></div>
+    <div class="kpi"><div class="num">${actioned}</div><div class="lbl">Actioned</div></div>`;
+  
+  renderCaptainHistTable(data);
+  
+  // Populate filter
+  populateActionFilter('#captHistAction');
+}
+
+function renderCaptainHistTable(data){
+  const tbl=$('#captHistTable');
+  tbl.innerHTML='<thead><tr><th>Store</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Onhand</th><th>Feedback</th><th>Action</th><th>Date</th><th></th></tr></thead><tbody>'+
+    data.map(r=>{
+      const isPending=!r.action;
+      const delBtn=isPending
+        ? `<button class="btn btn-sm btn-danger" onclick="captainDeleteRow('${r.id}')">🗑</button>`
+        : `<span style="font-size:10px;color:var(--text-light)" title="Only pending items can be deleted">🔒</span>`;
+      return `<tr><td>${r.store||''}</td><td>${r.item||r.item_code||''}</td><td>${r.description||''}</td><td>${r.quantity||''}</td><td>${r.physical_onhand||''}</td><td>${r.scenario||''}</td><td>${actionBadge(r.action)}</td><td>${formatDate(r.created_at)}</td><td>${delBtn}</td></tr>`;
+    }).join('')+
+    '</tbody>';
+}
+
+async function captainDeleteRow(id){
+  // Safety: re-verify the row is still pending and belongs to this captain
+  const row=captHistData.find(r=>r.id===id);
+  if(!row){toast('Item not found','error');return}
+  if(row.action){toast('This item has an action and cannot be deleted','warning');return}
+  if(row.captain!==currentUser.display_name){toast('You can only delete your own items','error');return}
+  
+  if(!confirm('Delete this pending item?')) return;
+  
+  try{
+    // Server-side guard: only delete if still pending (action is empty)
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${id}&action=eq.`,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'return=representation'}
+    });
+    const deleted=await res.json();
+    if(Array.isArray(deleted)&&deleted.length){
+      toast('Deleted');
+    }else{
+      toast('Could not delete — item may have been actioned','warning');
+    }
+    loadCaptainHistory();
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
+function exportCaptainHistory(){
+  if(!captHistData.length){toast('No data to export','warning');return}
+  const from=$('#captHistFrom').value;
+  const to=$('#captHistTo').value;
+  let datePart='';
+  if(from&&to) datePart='_'+from+'_to_'+to;
+  else if(from) datePart='_from_'+from;
+  else if(to) datePart='_to_'+to;
+  
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(captHistData.map(r=>({
+    Store:r.store,'Item Code':r.item||r.item_code||'',Description:r.description,Quantity:r.quantity,
+    'Physical Onhand':r.physical_onhand||'',Feedback:r.scenario,
+    Area:r.area,Hub:r.hub,'Sales Type':r.sales_type,
+    Action:r.action||'Pending',Notes:r.action_notes||'',Date:formatDate(r.created_at)
+  })));
+  XLSX.utils.book_append_sheet(wb,ws,'My Submissions');
+  XLSX.writeFile(wb,'my_submissions'+datePart+'.xlsx');
+}
+
+// ===== SUPERVISOR PORTAL =====
+async function initSupPortal(){
+  const sup=currentUser.display_name;
+  // Get stores under this supervisor
+  const stores=Object.entries(STORES).filter(([c,i])=>i.s===sup&&!EXCLUDED_STORES.has(c)).map(([c])=>c);
+  
+  const sel=$('#supFilterStore');
+  sel.innerHTML='<option value="">All Stores</option>';
+  stores.sort().forEach(s=>{sel.innerHTML+=`<option value="${s}">${s}</option>`});
+  
+  // Populate captain filter
+  const caps=CAPTAINS.filter(c=>c.s===sup);
+  const capSel=$('#supFilterCaptain');
+  capSel.innerHTML='<option value="">All Captains</option>';
+  caps.forEach(c=>{capSel.innerHTML+=`<option value="${c.n}">${c.n}</option>`});
+  
+  populateActionFilter('#supFilterAction');
+  loadSupData();
+}
+
+async function ensureSupCache(force){
+  if(_supCache&&!force) return _supCache;
+  const sup=currentUser.display_name;
+  const tbl=$('#supTable');
+  if(tbl) tbl.innerHTML='<tbody><tr><td style="padding:20px;text-align:center;color:var(--text-light)">Loading…</td></tr></tbody>';
+  _supCache=normalizeRows(await supaFetchAll('submissions',`supervisor=eq.${encodeURIComponent(sup)}&select=*&order=created_at.desc`));
+  return _supCache;
+}
+
+function loadSupData(){applySupFilter()}
+
+function applySupFilter(){
+  if(!_supCache){ensureSupCache().then(applySupFilter);return}
+  const store=$('#supFilterStore').value;
+  const action=$('#supFilterAction').value;
+  const captain=$('#supFilterCaptain').value;
+  const from=$('#supFilterFrom').value;
+  const to=$('#supFilterTo').value;
+  
+  let data=_supCache;
+  if(store) data=data.filter(r=>r.store===store);
+  if(action==='__pending') data=data.filter(r=>!r.action);
+  else if(action==='__has') data=data.filter(r=>!!r.action);
+  else if(action) data=data.filter(r=>r.action===action);
+  if(captain) data=data.filter(r=>r.captain===captain);
+  if(from) data=data.filter(r=>r.created_at>=from+'T00:00:00');
+  if(to) data=data.filter(r=>r.created_at<=to+'T23:59:59');
+  
+  const pending=data.filter(r=>!r.action).length;
+  $('#supStats').innerHTML=`
+    <div class="kpi"><div class="num">${data.length}</div><div class="lbl">Total</div></div>
+    <div class="kpi"><div class="num">${pending}</div><div class="lbl">Pending</div></div>
+    <div class="kpi"><div class="num">${data.length-pending}</div><div class="lbl">Actioned</div></div>`;
+  
+  renderTable('#supTable',data,['store','item','description','quantity','physical_onhand','scenario','captain','action','created_at']);
+}
+
+async function refreshSupData(){
+  toast('Refreshing…','warning');
+  await ensureSupCache(true);
+  applySupFilter();
+  toast('Data refreshed');
+}
+
+function clearSupFilters(){
+  ['supFilterStore','supFilterAction','supFilterCaptain','supFilterFrom','supFilterTo'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});
+  applySupFilter();
+}
+
+function exportSupData(){exportTableData('#supTable','supervisor_data')}
+
+// ===== MANAGER PORTAL =====
+async function initMgrPortal(){
+  const mgr=currentUser.display_name;
+  const sups=[...new Set(Object.values(STORES).filter(s=>s.m===mgr).map(s=>s.s))];
+  
+  const supSel=$('#mgrFilterSup');
+  supSel.innerHTML='<option value="">All Supervisors</option>';
+  sups.sort().forEach(s=>{supSel.innerHTML+=`<option value="${s}">${s}</option>`});
+  
+  const stores=Object.entries(STORES).filter(([c,i])=>i.m===mgr&&!EXCLUDED_STORES.has(c)).map(([c])=>c);
+  const storeSel=$('#mgrFilterStore');
+  storeSel.innerHTML='<option value="">All Stores</option>';
+  stores.sort().forEach(s=>{storeSel.innerHTML+=`<option value="${s}">${s}</option>`});
+  
+  const areaSel=$('#mgrFilterArea');
+  areaSel.innerHTML='<option value="">All Areas</option>';
+  AREAS.forEach(a=>{areaSel.innerHTML+=`<option value="${a}">${a}</option>`});
+  
+  populateActionFilter('#mgrFilterAction');
+  loadMgrData();
+}
+
+async function ensureMgrCache(force){
+  if(_mgrCache&&!force) return _mgrCache;
+  const mgr=currentUser.display_name;
+  const tbl=$('#mgrTable');
+  if(tbl) tbl.innerHTML='<tbody><tr><td style="padding:20px;text-align:center;color:var(--text-light)">Loading…</td></tr></tbody>';
+  _mgrCache=normalizeRows(await supaFetchAll('submissions',`manager=eq.${encodeURIComponent(mgr)}&select=*&order=created_at.desc`));
+  return _mgrCache;
+}
+
+function loadMgrData(){applyMgrFilter()}
+
+function applyMgrFilter(){
+  if(!_mgrCache){ensureMgrCache().then(applyMgrFilter);return}
+  const sup=$('#mgrFilterSup').value;
+  const store=$('#mgrFilterStore').value;
+  const action=$('#mgrFilterAction').value;
+  const area=$('#mgrFilterArea').value;
+  const from=$('#mgrFilterFrom').value;
+  const to=$('#mgrFilterTo').value;
+  
+  let data=_mgrCache;
+  if(sup) data=data.filter(r=>(r.supervisor||(STORES[r.store]||{}).s)===sup);
+  if(store) data=data.filter(r=>r.store===store);
+  if(action==='__pending') data=data.filter(r=>!r.action);
+  else if(action==='__has') data=data.filter(r=>!!r.action);
+  else if(action) data=data.filter(r=>r.action===action);
+  if(area) data=data.filter(r=>(r.area||(STORES[r.store]||{}).a)===area);
+  if(from) data=data.filter(r=>r.created_at>=from+'T00:00:00');
+  if(to) data=data.filter(r=>r.created_at<=to+'T23:59:59');
+  
+  const pending=data.filter(r=>!r.action).length;
+  $('#mgrStats').innerHTML=`
+    <div class="kpi"><div class="num">${data.length}</div><div class="lbl">Total</div></div>
+    <div class="kpi"><div class="num">${pending}</div><div class="lbl">Pending</div></div>
+    <div class="kpi"><div class="num">${data.length-pending}</div><div class="lbl">Actioned</div></div>`;
+  
+  renderTable('#mgrTable',data,['store','item','description','quantity','physical_onhand','scenario','captain','supervisor','action','created_at']);
+}
+
+async function refreshMgrData(){
+  toast('Refreshing…','warning');
+  await ensureMgrCache(true);
+  applyMgrFilter();
+  toast('Data refreshed');
+}
+
+function clearMgrFilters(){
+  ['mgrFilterSup','mgrFilterStore','mgrFilterAction','mgrFilterArea','mgrFilterFrom','mgrFilterTo'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});
+  applyMgrFilter();
+}
+
+function exportMgrData(){exportTableData('#mgrTable','manager_data')}
+
+// ===== ADMIN PORTAL =====
+async function initAdminPortal(){
+  // Check items catalog
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?select=id&limit=1`,{
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'count=exact','Range':'0-0'}
+    });
+    const count=res.headers.get('content-range');
+    const total=count?parseInt(count.split('/')[1]):0;
+    if(total===0){
+      toast('⚠ Items Catalog is empty! Go to Items Catalog tab to upload items.','warning');
+    }
+  }catch(e){}
+  
+  // Populate filters
+  const stores=Object.keys(STORES).filter(s=>!EXCLUDED_STORES.has(s)).sort();
+  const storeSel=$('#adFilterStore');
+  storeSel.innerHTML='<option value="">All Stores</option>';
+  stores.forEach(s=>{storeSel.innerHTML+=`<option value="${s}">${s}</option>`});
+  
+  const areaSel=$('#adFilterArea');
+  areaSel.innerHTML='<option value="">All Areas</option>';
+  AREAS.forEach(a=>{areaSel.innerHTML+=`<option value="${a}">${a}</option>`});
+  
+  const capSel=$('#adFilterCaptain');
+  capSel.innerHTML='<option value="">All Captains</option>';
+  CAPTAINS.forEach(c=>{capSel.innerHTML+=`<option value="${c.n}">${c.n}</option>`});
+  
+  populateActionFilter('#adFilterAction');
+  await ensureAdminCache(true);
+  loadDashboard();
+  applyAdminFilter();
+}
+
+async function loadDashboard(){
+  const data=await ensureAdminCache();
+  allData=data;
+  
+  const total=data.length;
+  const pending=data.filter(r=>!r.action).length;
+  const actioned=total-pending;
+  const stores=new Set(data.map(r=>r.store)).size;
+  
+  $('#dashStats').innerHTML=`
+    <div class="kpi"><div class="num">${total}</div><div class="lbl">Total</div></div>
+    <div class="kpi"><div class="num">${pending}</div><div class="lbl">Pending</div></div>
+    <div class="kpi"><div class="num">${actioned}</div><div class="lbl">Actioned</div></div>
+    <div class="kpi"><div class="num">${stores}</div><div class="lbl">Stores</div></div>`;
+  
+  // Bar chart by action
+  const actionCounts={};
+  actionCounts['Pending']=pending;
+  data.forEach(r=>{if(r.action) actionCounts[r.action]=(actionCounts[r.action]||0)+1});
+  
+  const maxVal=Math.max(...Object.values(actionCounts),1);
+  const colors={'Pending':'#F59E0B','Blocked Items':'#DC2626','Delisted Items':'#EC4899','Unicharm':'#3B82F6','Not Available':'#F97316','Onhand Available':'#16A34A','Issued by DIM':'#6366F1'};
+  
+  $('#dashChart').innerHTML=Object.entries(actionCounts).map(([k,v])=>{
+    const pct=Math.round(v/maxVal*100);
+    const color=colors[k]||'#94A3B8';
+    return `<div class="bar-col"><div class="bar-val">${v}</div><div class="bar" style="height:${pct}%;background:${color}"></div><div class="bar-label">${k}</div></div>`;
+  }).join('');
+  
+  // Breakdowns
+  renderBreakdown(data,'area','a','breakdownArea',r=>r.area||(STORES[r.store]||{}).a||'Unknown');
+  renderBreakdown(data,'captain','n','breakdownCaptain',r=>r.captain||'Unknown');
+  renderBreakdown(data,'supervisor','s','breakdownSupervisor',r=>r.supervisor||(STORES[r.store]||{}).s||'Unknown');
+  renderBreakdown(data,'manager','m','breakdownManager',r=>r.manager||(STORES[r.store]||{}).m||'Unknown');
+  
+  // Action cards (Change 8)
+  const actionCounts2={'Pending':pending};
+  data.forEach(r=>{if(r.action) actionCounts2[r.action]=(actionCounts2[r.action]||0)+1});
+  const acColors={'Pending':'#F59E0B','Blocked Items':'#DC2626','Delisted Items':'#EC4899','Unicharm':'#3B82F6','Not Available':'#F97316','Onhand Available':'#16A34A','Issued by DIM':'#6366F1','Issued':'#6366F1'};
+  $('#actionCards').innerHTML=Object.entries(actionCounts2).map(([k,v])=>{
+    const color=acColors[k]||'#94A3B8';
+    const pct=total?Math.round(v/total*100):0;
+    return `<div style="background:#fff;border-radius:8px;padding:14px;border-left:4px solid ${color};box-shadow:var(--shadow)"><div style="font-size:22px;font-weight:700;color:${color}">${v}</div><div style="font-size:11px;color:var(--text-light)">${k}</div><div style="font-size:10px;color:var(--text-light)">${pct}%</div></div>`;
+  }).join('');
+}
+
+function renderBreakdown(data,type,key,containerId,accessor){
+  const groups={};
+  data.forEach(r=>{
+    const val=accessor(r)||'Unknown';
+    if(!groups[val]) groups[val]={total:0,pending:0,actioned:0};
+    groups[val].total++;
+    if(!r.action) groups[val].pending++;
+    else groups[val].actioned++;
+  });
+  
+  const container=$('#'+containerId);
+  container.innerHTML=Object.entries(groups).sort((a,b)=>b[1].total-a[1].total).map(([name,s])=>
+    `<div class="breakdown-card"><div class="title">${name}</div><div class="stats">Total: <span>${s.total}</span> | Pending: <span>${s.pending}</span> | Actioned: <span>${s.actioned}</span></div></div>`
+  ).join('');
+}
+
+function exportBreakdown(type){
+  const data=allData;
+  let accessor,groupLabel;
+  if(type==='area'){accessor=r=>r.area;groupLabel='Area'}
+  else if(type==='captain'){accessor=r=>r.captain;groupLabel='Captain'}
+  else if(type==='supervisor'){accessor=r=>r.supervisor;groupLabel='Supervisor'}
+  else{accessor=r=>r.manager;groupLabel='Manager'}
+  
+  const groups={};
+  data.forEach(r=>{
+    const val=accessor(r)||'Unknown';
+    if(!groups[val]) groups[val]=[];
+    groups[val].push(r);
+  });
+  
+  const wb=XLSX.utils.book_new();
+  // Summary sheet
+  const summary=[[groupLabel,'Total','Pending','Actioned']];
+  Object.entries(groups).forEach(([name,rows])=>{
+    summary.push([name,rows.length,rows.filter(r=>!r.action).length,rows.filter(r=>r.action).length]);
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(summary),'Summary');
+  
+  // Detail sheets
+  Object.entries(groups).forEach(([name,rows])=>{
+    const sheetName=name.substring(0,31).replace(/[\\\/\?\*\[\]]/g,'');
+    const ws=XLSX.utils.json_to_sheet(rows.map(r=>({
+      Store:r.store,'Item Code':r.item||r.item_code||'',Description:r.description,Quantity:r.quantity,
+      'Physical Onhand':r.physical_onhand||'',Feedback:r.scenario,
+      Captain:r.captain,Supervisor:r.supervisor,Manager:r.manager,
+      Area:r.area,Hub:r.hub,'Sales Type':r.sales_type,
+      Action:r.action||'Pending',Notes:r.action_notes||'',Date:formatDate(r.created_at)
+    })));
+    XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  });
+  
+  XLSX.writeFile(wb,`breakdown_by_${type}.xlsx`);
+}
+
+// Fetch all submissions ONCE and cache them
+async function ensureAdminCache(force){
+  if(_adminCache&&!force) return _adminCache;
+  const tbl=$('#adTable');
+  if(tbl) tbl.innerHTML='<tbody><tr><td style="padding:20px;text-align:center;color:var(--text-light)">Loading data…</td></tr></tbody>';
+  _adminCache=normalizeRows(await supaFetchAll('submissions','select=*&order=created_at.desc'));
+  return _adminCache;
+}
+
+// Filter cached data client-side (INSTANT)
+function loadAdminData(){
+  applyAdminFilter();
+}
+
+function applyAdminFilter(){
+  if(!_adminCache){ensureAdminCache().then(applyAdminFilter);return}
+  const store=$('#adFilterStore').value;
+  const action=$('#adFilterAction').value;
+  const area=$('#adFilterArea').value;
+  const captain=$('#adFilterCaptain').value;
+  const search=$('#adFilterSearch').value.trim().toLowerCase();
+  const from=$('#adFilterFrom').value;
+  const to=$('#adFilterTo').value;
+  
+  let data=_adminCache;
+  if(store) data=data.filter(r=>r.store===store);
+  if(action==='__pending') data=data.filter(r=>!r.action);
+  else if(action==='__has') data=data.filter(r=>!!r.action);
+  else if(action) data=data.filter(r=>r.action===action);
+  if(area) data=data.filter(r=>(r.area||(STORES[r.store]||{}).a)===area);
+  if(captain) data=data.filter(r=>r.captain===captain);
+  if(from) data=data.filter(r=>r.created_at>=from+'T00:00:00');
+  if(to) data=data.filter(r=>r.created_at<=to+'T23:59:59');
+  if(search){
+    data=data.filter(r=>
+      (r.store||'').toLowerCase().includes(search)||
+      ((r.item||r.item_code||'')).toLowerCase().includes(search)||
+      (r.description||'').toLowerCase().includes(search)||
+      (r.captain||'').toLowerCase().includes(search)
+    );
+  }
+  
+  allData=data;
+  selectedIds.clear();
+  $('#selectAll').checked=false;
+  updateBulkBtn();
+  renderAdminTable(data);
+}
+
+// Refresh: re-fetch from server + re-apply filter
+async function refreshAdminData(){
+  toast('Refreshing…','warning');
+  await ensureAdminCache(true);
+  applyAdminFilter();
+  loadDashboard();
+  toast('Data refreshed');
+}
+
+function clearAdminFilters(){
+  ['adFilterStore','adFilterAction','adFilterArea','adFilterCaptain','adFilterSearch','adFilterFrom','adFilterTo'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});
+  applyAdminFilter();
+}
+
+function renderAdminTable(data){
+  const tbl=$('#adTable');
+  tbl.innerHTML='<thead><tr><th class="checkbox-col"><input type="checkbox" onchange="toggleSelectAll(this)"></th><th>Store</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Onhand</th><th>Feedback</th><th>Captain</th><th>Area</th><th>Action</th><th>Date</th><th></th></tr></thead><tbody>'+
+    data.map(r=>`<tr><td class="checkbox-col"><input type="checkbox" value="${r.id}" onchange="toggleSelect(this)" ${selectedIds.has(r.id)?'checked':''}></td>
+    <td>${r.store}</td><td>${r.item}</td><td>${r.description||''}</td><td>${r.quantity||''}</td><td>${r.physical_onhand||''}</td><td>${r.scenario||''}</td>
+    <td>${r.captain||''}</td><td>${r.area||''}</td><td>${actionBadge(r.action)}</td><td>${formatDate(r.created_at)}</td>
+    <td><button class="btn btn-sm btn-danger" onclick="deleteRow('${r.id}')">🗑</button></td></tr>`).join('')+
+    '</tbody>';
+}
+
+function toggleSelect(cb){
+  if(cb.checked) selectedIds.add(cb.value);
+  else selectedIds.delete(cb.value);
+  updateBulkBtn();
+}
+
+function toggleSelectAll(cb){
+  const checkboxes=$$('#adTable tbody input[type=checkbox]');
+  checkboxes.forEach(c=>{c.checked=cb.checked;if(cb.checked)selectedIds.add(c.value);else selectedIds.delete(c.value)});
+  updateBulkBtn();
+}
+
+function updateBulkBtn(){
+  $('#bulkDeleteBtn').style.display=selectedIds.size>0?'inline-flex':'none';
+  $('#bulkDeleteBtn').textContent=`🗑 Delete Selected (${selectedIds.size})`;
+}
+
+async function deleteRow(id){
+  if(!confirm('Delete this record?')) return;
+  await supaDelete('submissions',[id]);
+  toast('Deleted');
+  _adminCache=null;
+  await ensureAdminCache(true);
+  applyAdminFilter();
+}
+
+async function bulkDelete(){
+  if(!confirm(`Delete ${selectedIds.size} records?`)) return;
+  await supaDelete('submissions',[...selectedIds]);
+  toast(`Deleted ${selectedIds.size} records`);
+  selectedIds.clear();
+  _adminCache=null;
+  await ensureAdminCache(true);
+  applyAdminFilter();
+}
+
+// ===== ADMIN EXPORTS =====
+async function exportAdmin(mode){
+  let data;
+  if(mode==='pending'){
+    data=allData.filter(r=>!r.action);
+    // Deduplicate by store+item (keep latest)
+    const seen=new Map();
+    data.forEach(r=>{
+      const key=r.store+'|'+r.item;
+      if(!seen.has(key)) seen.set(key,r);
+    });
+    data=[...seen.values()];
+  }else if(mode==='today'){
+    const today=new Date().toLocaleDateString('en-US',{weekday:'long'});
+    const todayStores=Object.entries(SCHEDULE).filter(([s,days])=>days.includes(today)).map(([s])=>s);
+    data=allData.filter(r=>!r.action&&todayStores.includes(r.store));
+  }else{
+    data=allData;
+  }
+  
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(data.map(r=>({
+    Store:r.store,'Item Code':r.item||r.item_code||'',Description:r.description,Quantity:r.quantity,
+    'Physical Onhand':r.physical_onhand||'',Feedback:r.scenario,
+    Captain:r.captain,Supervisor:r.supervisor,Manager:r.manager,
+    Area:r.area,Hub:r.hub,'Sales Type':r.sales_type,
+    Action:r.action||'Pending',Notes:r.action_notes||'',Date:formatDate(r.created_at)
+  })));
+  XLSX.utils.book_append_sheet(wb,ws,'Data');
+  XLSX.writeFile(wb,`${mode}_export_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+// ===== ACTION FILE UPLOAD =====
+function handleActionUpload(input){
+  if(!input.files.length) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const wb=XLSX.read(e.target.result,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+    if(rows.length<2){toast('Empty file','error');return}
+    
+    const header=rows[0].map(h=>String(h||'').trim().toLowerCase());
+    const storeIdx=header.findIndex(h=>h.includes('store'));
+    const itemIdx=header.findIndex(h=>h.includes('item')&&!h.includes('desc'));
+    const actionIdx=header.findIndex(h=>h.includes('action'));
+    const notesIdx=header.findIndex(h=>h.includes('note'));
+    
+    actionUploadRows=[];
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i];
+      if(!r||r.every(c=>!c)) continue;
+      actionUploadRows.push({
+        store:storeIdx>=0?String(r[storeIdx]||'').trim():'',
+        item:itemIdx>=0?String(r[itemIdx]||'').trim():'',
+        action:actionIdx>=0?normalizeAction(String(r[actionIdx]||'').trim()):'',
+        notes:notesIdx>=0?String(r[notesIdx]||'').trim():''
+      });
+    }
+    
+    const tbl=$('#actionUploadTable');
+    tbl.innerHTML='<thead><tr><th>Store</th><th>Item</th><th>Action</th><th>Notes</th></tr></thead><tbody>'+
+      actionUploadRows.map(r=>`<tr><td>${r.store}</td><td>${r.item}</td><td>${r.action}</td><td>${r.notes}</td></tr>`).join('')+
+      '</tbody>';
+    $('#actionUploadPreview').classList.remove('hidden');
+  };
+  reader.readAsArrayBuffer(input.files[0]);
+}
+
+function normalizeAction(a){
+  const lower=a.toLowerCase().trim();
+  if(lower.includes('block')) return 'Blocked Items';
+  if(lower.includes('delist')) return 'Delisted Items';
+  if(lower.includes('unicharm')) return 'Unicharm';
+  if(lower.includes('not avail')) return 'Not Available';
+  if(lower.includes('onhand')) return 'Onhand Available';
+  if(lower.includes('dim')||lower.includes('issued')) return 'Issued by DIM';
+  if(lower.includes('pending')||!lower) return '';
+  return a;
+}
+
+async function confirmActionUpload(){
+  let updated=0,notFound=0;
+  for(const r of actionUploadRows){
+    if(!r.store||!r.item||!r.action) continue;
+    // Find matching pending submissions
+    const matches=await fetch(`${SUPABASE_URL}/rest/v1/submissions?store=eq.${encodeURIComponent(r.store)}&item_code=eq.${encodeURIComponent(r.item)}&action=eq.&select=id`,{
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+    });
+    const rows=await matches.json();
+    if(!rows.length){notFound++;continue}
+    
+    // Update first match, delete duplicates
+    const firstId=rows[0].id;
+    await supaUpdate('submissions',{id:firstId},{
+      action:r.action,
+      action_notes:r.notes,
+      action_by:currentUser.display_name,
+      action_date:new Date().toISOString()
+    });
+    
+    // Delete duplicate pending entries
+    if(rows.length>1){
+      const dupIds=rows.slice(1).map(r=>r.id);
+      await supaDelete('submissions',dupIds);
+    }
+    updated++;
+  }
+  toast(`Actions applied: ${updated} updated, ${notFound} not found`);
+  $('#actionUploadPreview').classList.add('hidden');
+  $('#actionFileInput').value='';
+  actionUploadRows=[];
+  _adminCache=null;
+  await ensureAdminCache(true);
+  applyAdminFilter();
+  loadDashboard();
+}
+
+// ===== USER MANAGEMENT =====
+async function loadUsers(){
+  const users=await supaFetchAll('app_users','select=id,username,display_name,role,sales_type,supervisor,area&order=role.asc,display_name.asc');
+  const tbl=$('#usersTable');
+  tbl.innerHTML='<thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Sales Type</th><th>Supervisor</th><th>Area</th><th></th></tr></thead><tbody>'+
+    users.map(u=>`<tr><td>${u.display_name}</td><td>${u.username}</td><td>${u.role}</td><td>${u.sales_type||''}</td><td>${u.supervisor||''}</td><td>${u.area||''}</td>
+    <td><button class="btn btn-sm btn-secondary" onclick="resetUserPass('${u.id}','${u.display_name}')">🔑</button> <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}','${u.display_name}')">🗑</button></td></tr>`).join('')+
+    '</tbody>';
+}
+
+function showAddUser(){
+  const supOptions=Object.keys(SUP_STORES).sort().map(s=>`<option value="${s}">${s}</option>`).join('');
+  const areaOptions=AREAS.map(a=>`<option value="${a}">${a}</option>`).join('');
+  
+  showModal(`<h3>Add User</h3>
+    <div class="form-group" style="margin-bottom:8px"><label>Display Name</label><input id="nuName"></div>
+    <div class="form-group" style="margin-bottom:8px"><label>Username (login)</label><input id="nuUser"></div>
+    <div class="form-group" style="margin-bottom:8px"><label>Role</label>
+    <select id="nuRole" onchange="onNewUserRoleChange()"><option value="captain">Captain</option><option value="supervisor">Supervisor</option><option value="manager">Manager</option><option value="admin">Admin</option></select></div>
+    <div class="form-group" style="margin-bottom:8px" id="nuSalesGroup"><label>Sales Type</label>
+    <select id="nuSales"><option value="Cash">Cash</option><option value="Insurance">Insurance</option><option value="Wasfaty">Wasfaty</option></select></div>
+    <div class="form-group" style="margin-bottom:8px" id="nuSupGroup"><label>Supervisor</label>
+    <select id="nuSup"><option value="">Select...</option>${supOptions}</select></div>
+    <div class="form-group" style="margin-bottom:12px" id="nuAreaGroup"><label>Area</label>
+    <select id="nuArea"><option value="">Select...</option>${areaOptions}</select></div>
+    <p style="font-size:11px;color:var(--text-light);margin-bottom:12px">Default password: 123456</p>
+    <div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="addUser()">Add</button><button class="btn btn-secondary" onclick="hideModal()">Cancel</button></div>`);
+}
+
+function onNewUserRoleChange(){
+  const role=$('#nuRole').value;
+  $('#nuSalesGroup').style.display=role==='captain'?'flex':'none';
+  $('#nuSupGroup').style.display=(role==='captain')?'flex':'none';
+  $('#nuAreaGroup').style.display=(role==='captain'||role==='supervisor')?'flex':'none';
+}
+
+async function addUser(){
+  const name=$('#nuName').value.trim();
+  const user=$('#nuUser').value.trim();
+  const role=$('#nuRole').value;
+  if(!name||!user){toast('Fill name and username','error');return}
+  
+  const hash=await sha256('123456');
+  const data={
+    username:user,display_name:name,role:role,password_hash:hash,
+    sales_type:role==='captain'?$('#nuSales').value:'',
+    supervisor:role==='captain'?$('#nuSup').value:'',
+    area:$('#nuArea').value||''
+  };
+  
+  try{
+    await supaInsert('app_users',[data]);
+    hideModal();
+    toast('User added!');
+    loadUsers();
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
+async function resetUserPass(id,name){
+  if(!confirm(`Reset password for ${name} to 123456?`)) return;
+  const hash=await sha256('123456');
+  await supaUpdate('app_users',{id:id},{password_hash:hash});
+  toast('Password reset!');
+}
+
+async function deleteUser(id,name){
+  if(!confirm(`Delete user ${name}?`)) return;
+  await supaDelete('app_users',[id]);
+  toast('User deleted');
+  loadUsers();
+}
+
+// ===== MANAGE ACTIONS =====
+function renderActions(){
+  const container=$('#actionsList');
+  container.innerHTML=ACTION_TYPES.map((a,i)=>
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0">
+    <span style="flex:1;font-size:13px">${actionBadge(a)} ${a}</span>
+    <button class="btn btn-sm btn-danger" onclick="removeAction(${i})">✕</button></div>`
+  ).join('');
+}
+
+function addAction(){
+  const name=$('#newActionInput').value.trim();
+  if(!name){toast('Enter action name','error');return}
+  if(ACTION_TYPES.includes(name)){toast('Already exists','warning');return}
+  ACTION_TYPES.push(name);
+  localStorage.setItem('sf_action_types',JSON.stringify(ACTION_TYPES));
+  $('#newActionInput').value='';
+  renderActions();
+  toast('Action added');
+}
+
+function removeAction(idx){
+  const name=ACTION_TYPES[idx];
+  if(!confirm(`Remove action "${name}"?`)) return;
+  ACTION_TYPES.splice(idx,1);
+  localStorage.setItem('sf_action_types',JSON.stringify(ACTION_TYPES));
+  renderActions();
+  toast('Action removed');
+}
+
+// ===== BLOCKED ITEMS ADMIN =====
+async function loadBlockedStats(){
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/blocked_items?select=id&limit=1`,{
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'count=exact','Range':'0-0'}
+    });
+    const count=res.headers.get('content-range');
+    $('#blockedStats').innerHTML=`<div class="kpi" style="display:inline-block"><div class="num">${count?count.split('/')[1]:'?'}</div><div class="lbl">Blocked Combinations</div></div>`;
+  }catch(e){$('#blockedStats').innerHTML='<p>Could not load stats</p>'}
+}
+
+async function handleRangedUpload(input){
+  if(!input.files.length) return;
+  const text=await input.files[0].text();
+  const lines=text.trim().split('\n');
+  if(lines.length<2){toast('Empty file','error');return}
+  
+  $('#rangedProgress').classList.remove('hidden');
+  
+  // Parse all lines
+  const projectStores=new Set(Object.keys(STORES));
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    const parts=lines[i].split('\t');
+    if(parts.length<2) continue;
+    const store=parts[0].trim();
+    const material=parts[1].trim();
+    if(projectStores.has(store)&&!EXCLUDED_STORES.has(store)){
+      rows.push({store_code:store,material_code:material});
+    }
+  }
+  
+  $('#rangedText').textContent=`Filtered ${rows.length} rows for project stores. Uploading...`;
+  
+  // Delete existing
+  try{
+    let deleted=true;
+    while(deleted){
+      const res=await fetch(`${SUPABASE_URL}/rest/v1/blocked_items?id=not.is.null&limit=1000`,{
+        method:'DELETE',
+        headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'return=minimal'}
+      });
+      // Check if there are more
+      const check=await fetch(`${SUPABASE_URL}/rest/v1/blocked_items?select=id&limit=1`,{
+        headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+      });
+      const remaining=await check.json();
+      if(!remaining.length) deleted=false;
+    }
+  }catch(e){}
+  
+  // Batch upload
+  const batchSize=500;
+  for(let i=0;i<rows.length;i+=batchSize){
+    const batch=rows.slice(i,i+batchSize);
+    await supaInsert('blocked_items',batch);
+    const pct=Math.min(100,Math.round((i+batchSize)/rows.length*100));
+    $('#rangedBar').style.width=pct+'%';
+    $('#rangedText').textContent=`Uploaded ${Math.min(i+batchSize,rows.length)} / ${rows.length}`;
+  }
+  
+  toast(`Uploaded ${rows.length} blocked item combinations`);
+  loadBlockedStats();
+}
+
+// ===== ITEMS CATALOG =====
+async function loadCatalogStats(){
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?select=id&limit=1`,{
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'count=exact','Range':'0-0'}
+    });
+    const count=res.headers.get('content-range');
+    $('#catalogStats').innerHTML=`<div class="kpi" style="display:inline-block"><div class="num">${count?count.split('/')[1]:'0'}</div><div class="lbl">Items in Catalog</div></div>`;
+  }catch(e){$('#catalogStats').innerHTML='<p>Could not load stats</p>'}
+}
+
+async function handleCatalogUpload(input){
+  if(!input.files.length) return;
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      if(rows.length<2){toast('Empty file','error');return}
+      
+      const header=rows[0].map(h=>String(h||'').trim().toLowerCase());
+      const codeIdx=header.findIndex(h=>h.includes('item')&&!h.includes('desc'));
+      const descIdx=header.findIndex(h=>h.includes('desc'));
+      const statusIdx=header.findIndex(h=>h.includes('status'));
+      
+      if(codeIdx<0){toast('No "Item" column found','error');return}
+      
+      const items=[];
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i];
+        if(!r||!r[codeIdx]) continue;
+        const code=String(r[codeIdx]).replace(/\.0$/,'').trim();
+        const desc=descIdx>=0?String(r[descIdx]||'').trim():'';
+        const status=statusIdx>=0?String(r[statusIdx]||'').trim():'REGULAR';
+        items.push({item_code:code,description:desc,status:status||'REGULAR'});
+      }
+      
+      if(!items.length){toast('No valid items found','error');return}
+      
+      $('#catalogProgress').classList.remove('hidden');
+      $('#catalogText').textContent=`Parsed ${items.length} items. Clearing old catalog...`;
+      
+      // Delete existing catalog
+      let hasMore=true;
+      while(hasMore){
+        await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?id=not.is.null`,{
+          method:'DELETE',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'return=minimal'}
+        });
+        const check=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?select=id&limit=1`,{
+          headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+        });
+        const remaining=await check.json();
+        hasMore=remaining.length>0;
+      }
+      
+      // Batch upload
+      const batchSize=500;
+      for(let i=0;i<items.length;i+=batchSize){
+        const batch=items.slice(i,i+batchSize);
+        await supaInsert('items_catalog',batch);
+        const pct=Math.min(100,Math.round((i+batchSize)/items.length*100));
+        $('#catalogBar').style.width=pct+'%';
+        $('#catalogText').textContent=`Uploaded ${Math.min(i+batchSize,items.length)} / ${items.length} items`;
+      }
+      
+      toast(`Catalog uploaded: ${items.length} items`);
+      loadCatalogStats();
+    }catch(err){toast('Error: '+err.message,'error')}
+  };
+  reader.readAsArrayBuffer(input.files[0]);
+}
+
+// ===== SHARED HELPERS =====
+function populateActionFilter(selId){
+  const sel=$(selId);
+  const current=sel.value;
+  const opts=sel.querySelectorAll('option');
+  // Keep first option
+  while(sel.options.length>1) sel.remove(1);
+  
+  sel.innerHTML+='<option value="__pending">⏳ Pending</option><option value="__has">✅ Has Action</option>';
+  ACTION_TYPES.filter(a=>a!=='Pending').forEach(a=>{
+    sel.innerHTML+=`<option value="${a}">${a}</option>`;
+  });
+  sel.value=current;
+}
+
+function actionBadge(action){
+  if(!action) return '<span class="action-badge action-pending">Pending</span>';
+  const classes={
+    'Blocked Items':'action-blocked',
+    'Delisted Items':'action-delisted',
+    'Unicharm':'action-unicharm',
+    'Not Available':'action-notavail',
+    'Onhand Available':'action-onhand',
+    'Issued by DIM':'action-dim'
+  };
+  const cls=classes[action]||'action-pending';
+  return `<span class="action-badge ${cls}">${action}</span>`;
+}
+
+function formatDate(d){
+  if(!d) return '';
+  const dt=new Date(d);
+  return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+function renderTable(selId,data,cols){
+  const colLabels={
+    store:'Store',item:'Item Code',description:'Description',quantity:'Qty',
+    physical_onhand:'Onhand',scenario:'Feedback',captain:'Captain',
+    supervisor:'Supervisor',manager:'Manager',area:'Area',hub:'Hub',
+    sales_type:'Sales Type',action:'Action',created_at:'Date',
+    action_notes:'Notes'
+  };
+  
+  const tbl=$(selId);
+  tbl.innerHTML='<thead><tr>'+cols.map(c=>`<th>${colLabels[c]||c}</th>`).join('')+'</tr></thead><tbody>'+
+    data.map(r=>'<tr>'+cols.map(c=>{
+      if(c==='action') return `<td>${actionBadge(r[c])}</td>`;
+      if(c==='created_at') return `<td>${formatDate(r[c])}</td>`;
+      return `<td>${r[c]||''}</td>`;
+    }).join('')+'</tr>').join('')+
+    '</tbody>';
+}
+
+function exportTableData(selId,filename){
+  const tbl=$(selId);
+  const wb=XLSX.utils.table_to_book(tbl);
+  XLSX.writeFile(wb,filename+'_'+new Date().toISOString().split('T')[0]+'.xlsx');
+}
+
+// ===== DRAG & DROP =====
+document.addEventListener('DOMContentLoaded',()=>{
+  const zone=$('#uploadZone');
+  if(zone){
+    zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('dragover')});
+    zone.addEventListener('dragleave',()=>{zone.classList.remove('dragover')});
+    zone.addEventListener('drop',e=>{
+      e.preventDefault();zone.classList.remove('dragover');
+      if(e.dataTransfer.files.length>0){$('#fileInput').files=e.dataTransfer.files;handleFileUpload($('#fileInput'))}
+    });
+  }
+  
+  // Load saved action types
+  const saved=localStorage.getItem('sf_action_types');
+  if(saved){try{ACTION_TYPES=JSON.parse(saved)}catch(e){}}
+  
+  // Handle #admin direct access
+  if(location.hash==='#admin'){
+    // Auto-login will handle it
+  }
+});
+
+// Close dropdown on outside click
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.search-box')){$$('.dropdown').forEach(d=>d.classList.remove('show'))}
+});
+
+// Close modal on overlay click
+$('#modalOverlay').addEventListener('click',e=>{if(e.target===$('#modalOverlay'))hideModal()});
+
+// Force clear old service worker cache
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{regs.forEach(r=>r.unregister())});
+}
+
+init();
+console.log('PULSE v7.2 loaded - material_code fix');
+</script>
+</body>
+</html>
