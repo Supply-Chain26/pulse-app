@@ -113,7 +113,7 @@ tr:hover{background:rgba(14,124,134,.03)}
 .user-bar .role-badge{background:rgba(255,255,255,.15);padding:2px 8px;border-radius:8px;font-size:10px}
 .chart-container{height:200px;position:relative;margin:16px 0}
 .bar-chart{display:flex;align-items:flex-end;justify-content:space-around;height:100%;gap:4px;padding:0 10px}
-.bar-col{display:flex;flex-direction:column;align-items:center;flex:1;max-width:60px}
+.bar-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;max-width:60px;height:100%}
 .bar{width:100%;border-radius:4px 4px 0 0;min-height:2px;transition:height .5s}
 .bar-label{font-size:9px;color:var(--text-light);margin-top:4px;text-align:center;word-break:break-all}
 .bar-val{font-size:10px;font-weight:600;margin-bottom:2px}
@@ -162,6 +162,22 @@ select option.today-delivery{background:#D1FAE5}
 .match-fuzzy{background:#FEF3C7;color:#92400E}
 .match-none{background:#FEE2E2;color:#991B1B}
 .mapping-preview{margin-top:16px;background:#F8FAFC;border-radius:8px;padding:12px;font-size:12px;color:var(--text-light)}
+
+/* Expiry rules */
+.rule-add-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding:12px;background:#F8FAFC;border:1px solid var(--border);border-radius:8px}
+.rule-preview{margin-top:10px;font-size:12px;color:var(--text-light)}
+.rule-preview b{color:var(--primary)}
+.rule-hint{font-size:12px;padding:8px 10px;border-radius:6px;display:none}
+.rule-hint.show{display:block}
+.rule-ok{background:#D1FAE5;color:#065F46}
+.rule-bad{background:#FEE2E2;color:#991B1B}
+.rule-warn{background:#FEF3C7;color:#92400E}
+.alert-box{background:#FEF3C7;border-left:4px solid var(--warning);border-radius:8px;padding:14px;margin-bottom:16px}
+.alert-box h3{font-size:14px;font-weight:600;color:#92400E;margin-bottom:6px}
+.alert-box p{font-size:12px;color:#92400E;margin-bottom:8px}
+.alert-chip{display:inline-block;background:#fff;border:1px solid #FDE68A;border-radius:6px;padding:3px 8px;font-size:11px;margin:2px 4px 2px 0}
+.type-badge{background:#E0E7FF;color:#3730A3;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:500}
+.unclassified-badge{background:#FEE2E2;color:#991B1B;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:500}
 </style>
 </head>
 <body>
@@ -212,7 +228,7 @@ select option.today-delivery{background:#D1FAE5}
 </div>
 <div class="header-center">
 <div class="pulse">PULSE</div>
-<div class="pulse-sub">Select Module</div>
+<div class="pulse-sub">PULSE Portal</div>
 </div>
 <div style="width:120px;text-align:right">
 <button class="btn btn-sm btn-danger" onclick="doLogout()">Logout</button>
@@ -226,17 +242,22 @@ select option.today-delivery{background:#D1FAE5}
 </div>
 <div class="container" style="display:flex;justify-content:center;align-items:center;min-height:50vh">
 <div>
-<h2 style="text-align:center;color:var(--navy);margin-bottom:24px">اختر النظام</h2>
-<div class="module-selector">
-<div class="module-card" onclick="selectModule('pulse')">
+<h2 style="text-align:center;color:var(--navy);margin-bottom:24px">Select Module</h2>
+<div class="module-selector" id="moduleCards">
+<div class="module-card" id="cardPulse" onclick="selectModule('pulse')">
 <div class="icon">📦</div>
 <div class="title">PULSE</div>
 <div class="desc">Pharmacy Urgent Live Stock Engine</div>
 </div>
-<div class="module-card" onclick="selectModule('feedback')">
+<div class="module-card" id="cardFeedback" onclick="selectModule('feedback')">
 <div class="icon">💊</div>
 <div class="title">Pharmacy Feedback</div>
-<div class="desc">ملاحظات الصيدلية</div>
+<div class="desc">Inventory feedback from pharmacies</div>
+</div>
+<div class="module-card" id="cardAdmin" onclick="selectModule('admin')" style="display:none">
+<div class="icon">⚙️</div>
+<div class="title">Administration</div>
+<div class="desc">Users and master data</div>
 </div>
 </div>
 </div>
@@ -257,7 +278,7 @@ select option.today-delivery{background:#D1FAE5}
 </div>
 <div class="header-center">
 <div class="pulse">PULSE <span class="badge badge-live" style="-webkit-text-fill-color:#fff">LIVE</span></div>
-<div class="pulse-sub">Pharmacy Urgent Live Stock Engine</div>
+<div class="pulse-sub" id="appSubtitle">Pharmacy Urgent Live Stock Engine</div>
 </div>
 <div style="width:120px"></div>
 </header>
@@ -443,12 +464,8 @@ select option.today-delivery{background:#D1FAE5}
 <div class="tabs">
 <div class="tab active" onclick="switchTab(this,'adminDash')">Dashboard</div>
 <div class="tab" onclick="switchTab(this,'adminData')">All Data</div>
-<div class="tab" onclick="switchTab(this,'adminUsers')">Users</div>
 <div class="tab" onclick="switchTab(this,'adminActions')">Actions</div>
 <div class="tab" onclick="switchTab(this,'adminBlocked')">Blocked Items</div>
-<div class="tab" onclick="switchTab(this,'adminCatalog')">Items Catalog</div>
-<div class="tab" onclick="switchTab(this,'adminMasterData')">Master Data</div>
-<div class="tab" onclick="switchTab(this,'adminPharmFeedback')">Pharmacy Feedback</div>
 </div>
 
 <div id="adminDash" class="tab-content active">
@@ -521,14 +538,6 @@ select option.today-delivery{background:#D1FAE5}
 </div>
 </div>
 
-<div id="adminUsers" class="tab-content">
-<div class="card">
-<h2>👥 User Management</h2>
-<button class="btn btn-sm btn-primary" onclick="showAddUser()" style="margin-bottom:12px">+ Add User</button>
-<div class="table-wrap"><table id="usersTable"></table></div>
-</div>
-</div>
-
 <div id="adminActions" class="tab-content">
 <div class="card">
 <h2>⚙️ Manage Actions</h2>
@@ -537,21 +546,6 @@ select option.today-delivery{background:#D1FAE5}
 <div style="margin-top:12px;display:flex;gap:8px">
 <input id="newActionInput" placeholder="New action name..." style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;flex:1">
 <button class="btn btn-sm btn-primary" onclick="addAction()">Add</button>
-</div>
-</div>
-</div>
-
-<div id="adminCatalog" class="tab-content">
-<div class="card">
-<h2>📦 Items Catalog</h2>
-<div id="catalogStats" style="margin-bottom:12px"></div>
-<p style="font-size:12px;color:var(--text-light);margin-bottom:8px">Upload Excel file with columns: Item, Description, Status (or use the xlsb items sheet)</p>
-<input type="file" id="catalogFileInput" accept=".xlsx,.xls" onchange="handleCatalogUpload(this)">
-<div id="catalogProgress" class="hidden" style="margin-top:12px">
-<div style="background:#E8EDEF;border-radius:6px;height:20px;overflow:hidden">
-<div id="catalogBar" style="height:100%;background:var(--primary);width:0%;transition:width .3s;border-radius:6px"></div>
-</div>
-<p id="catalogText" style="font-size:12px;margin-top:4px;color:var(--text-light)"></p>
 </div>
 </div>
 </div>
@@ -571,13 +565,33 @@ select option.today-delivery{background:#D1FAE5}
 </div>
 </div>
 
-<div id="adminMasterData" class="tab-content">
+</div>
+</div>
+
+<!-- ===== ADMINISTRATION PORTAL (admin only) ===== -->
+<div id="portalAdminSettings" class="hidden">
+<div class="container">
+<div class="tabs">
+<div class="tab active" onclick="switchTab(this,'setUsers')">Users</div>
+<div class="tab" onclick="switchTab(this,'setMasterData')">Master Data</div>
+<div class="tab" onclick="switchTab(this,'setExpiryRules')">Expiry Rules</div>
+</div>
+
+<div id="setUsers" class="tab-content active">
+<div class="card">
+<h2>👥 User Management</h2>
+<p style="font-size:12px;color:var(--text-light);margin-bottom:12px">Only an admin can add users or change module access.</p>
+<button class="btn btn-sm btn-primary" onclick="showAddUser()" style="margin-bottom:12px">+ Add User</button>
+<div class="table-wrap"><table id="usersTable"></table></div>
+</div>
+</div>
+
+<div id="setMasterData" class="tab-content">
 <div class="card">
 <h2>🏪 Store Master Upload</h2>
 <div id="storeMasterStats" style="margin-bottom:12px"></div>
 <p style="font-size:12px;color:var(--text-light);margin-bottom:8px">Upload Store Master Excel. Expected columns: Plant, City, Area Name, Supervisor, Area Manager, Head, Opening Date, Age in Days, Age, WH, Store Type</p>
 <input type="file" id="storeMasterInput" accept=".xlsx,.xls" onchange="handleStoreMasterUpload(this)">
-<div id="storeMasterMapping" class="hidden"></div>
 <div id="storeMasterProgress" class="hidden" style="margin-top:12px">
 <div style="background:#E8EDEF;border-radius:6px;height:20px;overflow:hidden">
 <div id="storeMasterBar" style="height:100%;background:var(--primary);width:0%;transition:width .3s;border-radius:6px"></div>
@@ -588,9 +602,8 @@ select option.today-delivery{background:#D1FAE5}
 <div class="card" style="margin-top:16px">
 <h2>📦 Item Master Upload</h2>
 <div id="itemMasterStats" style="margin-bottom:12px"></div>
-<p style="font-size:12px;color:var(--text-light);margin-bottom:8px">Upload Item Master Excel. Expected columns: Item Number, Description, Status. Column mapping is automatic.</p>
+<p style="font-size:12px;color:var(--text-light);margin-bottom:8px">Upload Item Master Excel. Expected columns: Item Number, Description, Status, Item Type. Column mapping is automatic. This replaces the whole items catalog and feeds both PULSE and Pharmacy Feedback.</p>
 <input type="file" id="itemMasterInput" accept=".xlsx,.xls" onchange="handleItemMasterUpload(this)">
-<div id="itemMasterMapping" class="hidden"></div>
 <div id="itemMasterProgress" class="hidden" style="margin-top:12px">
 <div style="background:#E8EDEF;border-radius:6px;height:20px;overflow:hidden">
 <div id="itemMasterBar" style="height:100%;background:var(--primary);width:0%;transition:width .3s;border-radius:6px"></div>
@@ -600,13 +613,80 @@ select option.today-delivery{background:#D1FAE5}
 </div>
 </div>
 
-<div id="adminPharmFeedback" class="tab-content">
+<div id="setExpiryRules" class="tab-content">
+<div id="unclassifiedAlert"></div>
+<div class="card">
+<h2>⏳ Expiry Rules by Item Type</h2>
+<p style="font-size:12px;color:var(--text-light);margin-bottom:12px">
+Set how far ahead an expiry date may be for each item type. A pharmacist can only submit a near-expire item whose expiry date falls inside this window.
+Changes apply to everyone immediately — no redeploy needed.
+</p>
+<div class="rule-add-row">
+<div class="form-group" style="flex:2;min-width:160px">
+<label>Item Type</label>
+<select id="ruleType"><option value="">Select type...</option></select>
+</div>
+<div class="form-group" style="flex:1;min-width:90px">
+<label>Min months</label>
+<input type="number" id="ruleMin" min="0" max="60" value="1" oninput="renderRulePreview()">
+</div>
+<div class="form-group" style="flex:1;min-width:90px">
+<label>Max months</label>
+<input type="number" id="ruleMax" min="1" max="60" value="3" oninput="renderRulePreview()">
+</div>
+<button class="btn btn-primary" onclick="saveExpiryRule()">Save Rule</button>
+</div>
+<div id="rulePreview" class="rule-preview"></div>
+<div class="table-wrap" style="margin-top:14px"><table id="rulesTable"></table></div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- ===== PHARMACY FEEDBACK — ADMIN VIEW ===== -->
+<div id="portalFeedbackAdmin" class="hidden">
+<div class="container">
+<div class="tabs">
+<div class="tab active" onclick="switchTab(this,'fbDash')">Dashboard</div>
+<div class="tab" onclick="switchTab(this,'fbData')">All Feedback</div>
+</div>
+
+<div id="fbDash" class="tab-content active">
+<div id="fbUnclassifiedAlert"></div>
+<div id="fbDashStats" class="kpi-row"></div>
+<div class="card">
+<h2>📊 Submissions by Type</h2>
+<div id="fbTypeCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px"></div>
+<div class="chart-container"><div id="fbChart" class="bar-chart"></div></div>
+</div>
+<div class="card">
+<h2>👤 Pharmacist Activity</h2>
+<div id="fbByPharmacist" class="breakdown-grid"></div>
+</div>
+<div class="card">
+<h2>🏪 Breakdown by Store</h2>
+<div id="fbByStore" class="breakdown-grid"></div>
+</div>
+<div class="card">
+<h2>📅 Last 14 Days</h2>
+<div class="chart-container"><div id="fbTrend" class="bar-chart"></div></div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+<button class="btn btn-sm btn-primary" onclick="exportFbBreakdown('pharmacist')">⬇ Export by Pharmacist</button>
+<button class="btn btn-sm btn-primary" onclick="exportFbBreakdown('store')">⬇ Export by Store</button>
+<button class="btn btn-sm btn-secondary" onclick="loadPharmFeedbackAdmin()">🔄 Refresh</button>
+</div>
+</div>
+
+<div id="fbData" class="tab-content">
 <div class="card">
 <h2>💊 Pharmacy Feedback Data</h2>
 <div class="filter-row">
 <select id="pfFilterTab"><option value="">All Types</option><option value="sales_changes">Sales Changes</option><option value="near_expire_items">Near Expire</option><option value="alternative_items">Alternatives</option><option value="overstock_items">Overstock</option></select>
 <select id="pfFilterStore"><option value="">All Stores</option></select>
 <select id="pfFilterPharmacist"><option value="">All Pharmacists</option></select>
+<select id="pfFilterStatus"><option value="">All</option><option value="new">New only</option><option value="exported">Exported only</option></select>
 <input type="date" id="pfFilterFrom" title="From date">
 <input type="date" id="pfFilterTo" title="To date">
 <button class="btn btn-sm btn-primary" onclick="loadPharmFeedbackAdmin()">🔍 Filter</button>
@@ -703,12 +783,15 @@ select option.today-delivery{background:#D1FAE5}
 <input id="neDesc" readonly style="background:#f8f9fa">
 </div>
 <div class="form-group">
-<label>Batch Number <span class="req">*</span></label>
-<input id="neBatch" placeholder="Batch number">
+<label>Batch Number</label>
+<input id="neBatch" placeholder="Batch number (optional)">
 </div>
 <div class="form-group">
 <label>Expiry Date <span class="req">*</span></label>
-<input type="date" id="neExpiry">
+<input type="date" id="neExpiry" onchange="checkExpiryWindow()">
+</div>
+<div class="form-group full" style="margin-top:-4px">
+<div id="neRuleHint" class="rule-hint"></div>
 </div>
 <div class="form-group">
 <label>Quantity <span class="req">*</span></label>
@@ -911,12 +994,13 @@ function switchTab(el,id){
   // Refresh data on tab switch
   if(id==='adminDash') loadDashboard();
   if(id==='adminData') loadAdminData();
-  if(id==='adminUsers') loadUsers();
   if(id==='adminActions') renderActions();
   if(id==='adminBlocked') loadBlockedStats();
-  if(id==='adminCatalog') loadCatalogStats();
-  if(id==='adminMasterData') loadMasterDataStats();
-  if(id==='adminPharmFeedback') loadPharmFeedbackAdmin();
+  if(id==='setUsers') loadUsers();
+  if(id==='setMasterData') loadMasterDataStats();
+  if(id==='setExpiryRules') loadExpiryRulesTab();
+  if(id==='fbDash') renderFeedbackDashboard();
+  if(id==='fbData') loadPharmFeedbackAdmin();
   if(id==='captainHistory') loadCaptainHistory();
   if(id==='captainSchedule') loadScheduleTable();
 }
@@ -1050,40 +1134,72 @@ function doLogout(){
   $('#mainApp').classList.add('hidden');
   $('#moduleSelector').classList.add('hidden');
   $('#loginScreen').classList.remove('hidden');
-  ['portalCaptain','portalSupervisor','portalManager','portalAdmin','portalPharmacist'].forEach(id=>$('#'+id).classList.add('hidden'));
+  ALL_PORTALS.forEach(id=>$('#'+id).classList.add('hidden'));
+}
+
+const ALL_PORTALS=['portalCaptain','portalSupervisor','portalManager','portalAdmin','portalPharmacist','portalFeedbackAdmin','portalAdminSettings'];
+
+const MODULE_SUBTITLE={
+  pulse:'Pharmacy Urgent Live Stock Engine',
+  feedback:'Pharmacy Feedback Module',
+  admin:'Administration'
+};
+
+// Which modules this user may enter. Administration is role-driven, not a stored flag.
+function userModules(){
+  const mods=(currentUser.allowed_modules||'pulse').split(',').map(m=>m.trim()).filter(Boolean);
+  const out=[];
+  if(mods.includes('pulse')) out.push('pulse');
+  if(mods.includes('feedback')) out.push('feedback');
+  if(currentUser.role==='admin') out.push('admin');
+  return out.length?out:['pulse'];
 }
 
 function showPortal(){
-  const modules=(currentUser.allowed_modules||'pulse').split(',').map(m=>m.trim());
+  const mods=userModules();
   const role=currentUser.role;
 
-  // If user has access to both modules, show selector (unless already selected)
-  if(modules.includes('pulse')&&modules.includes('feedback')&&!currentUser._activeModule){
+  // More than one module available -> let the user choose
+  if(mods.length>1&&!currentUser._activeModule){
     $('#loginScreen').classList.add('hidden');
     $('#mainApp').classList.add('hidden');
     $('#moduleSelector').classList.remove('hidden');
     $('#modUserName').textContent=currentUser.display_name;
     $('#modUserRole').textContent=role.toUpperCase();
+    $('#cardPulse').style.display=mods.includes('pulse')?'block':'none';
+    $('#cardFeedback').style.display=mods.includes('feedback')?'block':'none';
+    $('#cardAdmin').style.display=mods.includes('admin')?'block':'none';
     return;
   }
 
-  const activeModule=currentUser._activeModule||(modules.includes('pulse')?'pulse':'feedback');
+  let activeModule=currentUser._activeModule||mods[0];
+  if(!mods.includes(activeModule)) activeModule=mods[0];
 
   $('#loginScreen').classList.add('hidden');
   $('#moduleSelector').classList.add('hidden');
   $('#mainApp').classList.remove('hidden');
   $('#userDisplayName').textContent=currentUser.display_name;
   $('#userRoleBadge').textContent=role.toUpperCase();
+  $('#appSubtitle').textContent=MODULE_SUBTITLE[activeModule]||MODULE_SUBTITLE.pulse;
 
-  // Show back button if user has both modules
   const backBtn=$('#btnBackModules');
-  if(backBtn) backBtn.style.display=(modules.includes('pulse')&&modules.includes('feedback'))?'inline-flex':'none';
+  if(backBtn) backBtn.style.display=mods.length>1?'inline-flex':'none';
 
-  ['portalCaptain','portalSupervisor','portalManager','portalAdmin','portalPharmacist'].forEach(id=>$('#'+id).classList.add('hidden'));
+  ALL_PORTALS.forEach(id=>$('#'+id).classList.add('hidden'));
 
-  if(activeModule==='feedback'){
-    $('#portalPharmacist').classList.remove('hidden');
-    initPharmacistPortal();
+  if(activeModule==='admin'){
+    if(role!=='admin'){toast('Admins only','error');return}
+    $('#portalAdminSettings').classList.remove('hidden');
+    initAdminSettings();
+  } else if(activeModule==='feedback'){
+    if(role==='admin'){
+      // Admin oversees the module: dashboard and export, no data entry
+      $('#portalFeedbackAdmin').classList.remove('hidden');
+      initFeedbackAdmin();
+    }else{
+      $('#portalPharmacist').classList.remove('hidden');
+      initPharmacistPortal();
+    }
   } else {
     if(role==='captain') {$('#portalCaptain').classList.remove('hidden');initCaptainPortal()}
     else if(role==='supervisor'){$('#portalSupervisor').classList.remove('hidden');initSupPortal()}
@@ -1094,6 +1210,7 @@ function showPortal(){
 }
 
 function selectModule(mod){
+  if(!userModules().includes(mod)){toast('You do not have access to that module','error');return}
   currentUser._activeModule=mod;
   sessionStorage.setItem('sfUser',JSON.stringify(currentUser));
   showPortal();
@@ -1103,10 +1220,8 @@ function showModuleSelector(){
   currentUser._activeModule=null;
   sessionStorage.setItem('sfUser',JSON.stringify(currentUser));
   $('#mainApp').classList.add('hidden');
-  ['portalCaptain','portalSupervisor','portalManager','portalAdmin','portalPharmacist'].forEach(id=>$('#'+id).classList.add('hidden'));
-  $('#moduleSelector').classList.remove('hidden');
-  $('#modUserName').textContent=currentUser.display_name;
-  $('#modUserRole').textContent=currentUser.role.toUpperCase();
+  ALL_PORTALS.forEach(id=>$('#'+id).classList.add('hidden'));
+  showPortal();
 }
 
 function showChangePassword(){
@@ -1204,7 +1319,7 @@ function showItemStatusBadge(status){
 async function lookupItemByCode(code){
   if(!code) return null;
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?item_code=eq.${encodeURIComponent(code)}&select=item_code,description,status&limit=1`,{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?item_code=eq.${encodeURIComponent(code)}&select=item_code,description,status,item_type&limit=1`,{
       headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
     });
     const rows=await res.json();
@@ -1976,7 +2091,7 @@ async function loadDashboard(){
   const colors={'Pending':'#F59E0B','Blocked Items':'#DC2626','Delisted Items':'#EC4899','Unicharm':'#3B82F6','Not Available':'#F97316','Onhand Available':'#16A34A','Issued by DIM':'#6366F1'};
   
   $('#dashChart').innerHTML=Object.entries(actionCounts).map(([k,v])=>{
-    const pct=Math.round(v/maxVal*100);
+    const pct=Math.round(v/maxVal*82);
     const color=colors[k]||'#94A3B8';
     return `<div class="bar-col"><div class="bar-val">${v}</div><div class="bar" style="height:${pct}%;background:${color}"></div><div class="bar-label">${k}</div></div>`;
   }).join('');
@@ -2471,79 +2586,6 @@ async function handleRangedUpload(input){
   loadBlockedStats();
 }
 
-// ===== ITEMS CATALOG =====
-async function loadCatalogStats(){
-  try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?select=id&limit=1`,{
-      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'count=exact','Range':'0-0'}
-    });
-    const count=res.headers.get('content-range');
-    $('#catalogStats').innerHTML=`<div class="kpi" style="display:inline-block"><div class="num">${count?count.split('/')[1]:'0'}</div><div class="lbl">Items in Catalog</div></div>`;
-  }catch(e){$('#catalogStats').innerHTML='<p>Could not load stats</p>'}
-}
-
-async function handleCatalogUpload(input){
-  if(!input.files.length) return;
-  const reader=new FileReader();
-  reader.onload=async function(e){
-    try{
-      const wb=XLSX.read(e.target.result,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
-      if(rows.length<2){toast('Empty file','error');return}
-      
-      const header=rows[0].map(h=>String(h||'').trim().toLowerCase());
-      const codeIdx=header.findIndex(h=>h.includes('item')&&!h.includes('desc'));
-      const descIdx=header.findIndex(h=>h.includes('desc'));
-      const statusIdx=header.findIndex(h=>h.includes('status'));
-      
-      if(codeIdx<0){toast('No "Item" column found','error');return}
-      
-      const items=[];
-      for(let i=1;i<rows.length;i++){
-        const r=rows[i];
-        if(!r||!r[codeIdx]) continue;
-        const code=String(r[codeIdx]).replace(/\.0$/,'').trim();
-        const desc=descIdx>=0?String(r[descIdx]||'').trim():'';
-        const status=statusIdx>=0?String(r[statusIdx]||'').trim():'REGULAR';
-        items.push({item_code:code,description:desc,status:status||'REGULAR'});
-      }
-      
-      if(!items.length){toast('No valid items found','error');return}
-      
-      $('#catalogProgress').classList.remove('hidden');
-      $('#catalogText').textContent=`Parsed ${items.length} items. Clearing old catalog...`;
-      
-      // Delete existing catalog
-      let hasMore=true;
-      while(hasMore){
-        await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?id=not.is.null`,{
-          method:'DELETE',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'return=minimal'}
-        });
-        const check=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?select=id&limit=1`,{
-          headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
-        });
-        const remaining=await check.json();
-        hasMore=remaining.length>0;
-      }
-      
-      // Batch upload
-      const batchSize=500;
-      for(let i=0;i<items.length;i+=batchSize){
-        const batch=items.slice(i,i+batchSize);
-        await supaInsert('items_catalog',batch);
-        const pct=Math.min(100,Math.round((i+batchSize)/items.length*100));
-        $('#catalogBar').style.width=pct+'%';
-        $('#catalogText').textContent=`Uploaded ${Math.min(i+batchSize,items.length)} / ${items.length} items`;
-      }
-      
-      toast(`Catalog uploaded: ${items.length} items`);
-      loadCatalogStats();
-    }catch(err){toast('Error: '+err.message,'error')}
-  };
-  reader.readAsArrayBuffer(input.files[0]);
-}
-
 // ===== SHARED HELPERS =====
 function populateActionFilter(selId){
   const sel=$(selId);
@@ -2658,7 +2700,7 @@ const PHARM_TABLES={
 
 // ===== INIT =====
 async function initPharmacistPortal(){
-  await loadPharmStores();
+  await Promise.all([loadPharmStores(),loadExpiryRules()]);
   // Restore last used store for convenience
   const last=localStorage.getItem('pharm_last_store');
   if(last&&PHARM_STORE_INFO[last]){
@@ -2746,6 +2788,8 @@ function switchPharmTab(el,id){
   // Store selector only matters on the entry tabs
   $('#pharmStoreSelector').style.display=(id==='pharmMySubmissions')?'none':'block';
   if(id==='pharmMySubmissions') loadMyPharmSubmissions();
+  // Pick up any rule the admin changed while this session was open
+  if(id==='pharmNearExpire') loadExpiryRules().then(applyExpiryRuleHint);
 }
 
 // ===== ITEM SEARCH (shared by all pharm tabs) =====
@@ -2760,8 +2804,8 @@ function searchPharmItems(input,ddId,descId){
     try{
       const isNum=/^\d+$/.test(q);
       const query=isNum
-        ? `item_code=like.*${q}*&limit=30&select=item_code,description,status`
-        : `or=(item_code.ilike.*${encodeURIComponent(q)}*,description.ilike.*${encodeURIComponent(q)}*)&limit=30&select=item_code,description,status`;
+        ? `item_code=like.*${q}*&limit=30&select=item_code,description,status,item_type`
+        : `or=(item_code.ilike.*${encodeURIComponent(q)}*,description.ilike.*${encodeURIComponent(q)}*)&limit=30&select=item_code,description,status,item_type`;
       const res=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?${query}`,{
         headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
       });
@@ -2772,7 +2816,9 @@ function searchPharmItems(input,ddId,descId){
       }
       dd.innerHTML=matches.map(it=>{
         const safeDesc=(it.description||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
-        return `<div class="dd-item" onclick="selectPharmItem('${it.item_code}','${safeDesc}','${inputId}','${descId}','${ddId}')"><span class="code">${it.item_code}</span> <span class="desc">${it.description||''}</span></div>`;
+        const safeType=String(it.item_type||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+        const typeTag=it.item_type?` <span class="type-badge">${it.item_type}</span>`:'';
+        return `<div class="dd-item" onclick="selectPharmItem('${it.item_code}','${safeDesc}','${inputId}','${descId}','${ddId}','${safeType}')"><span class="code">${it.item_code}</span> <span class="desc">${it.description||''}</span>${typeTag}</div>`;
       }).join('');
       dd.classList.add('show');
     }catch(e){
@@ -2789,15 +2835,20 @@ function searchPharmItems(input,ddId,descId){
       if(item){
         $('#'+descId).value=item.description||'';
         $('#'+ddId).classList.remove('show');
+        if(inputId==='neItemCode'){neItemType=item.item_type||'';applyExpiryRuleHint()}
       }
     },450);
   }
 }
 
-function selectPharmItem(code,desc,inputId,descId,ddId){
+function selectPharmItem(code,desc,inputId,descId,ddId,itemType){
   $('#'+inputId).value=code;
   $('#'+descId).value=desc;
   $('#'+ddId).classList.remove('show');
+  if(inputId==='neItemCode'){
+    neItemType=itemType===undefined?null:(itemType||'');
+    applyExpiryRuleHint();
+  }
 }
 
 // ===== SUBMIT: Sales Changes =====
@@ -2826,26 +2877,42 @@ async function submitSalesChange(){
 async function submitNearExpire(){
   const store=getPharmStore();if(!store)return;
   const item=$('#neItemCode').value.trim();
-  const batch=$('#neBatch').value.trim();
+  const batch=$('#neBatch').value.trim();   // optional
   const expiry=$('#neExpiry').value;
   const qty=parseInt($('#neQty').value);
   if(!item){toast('Enter item code','error');return}
-  if(!batch){toast('Enter batch number','error');return}
   if(!expiry){toast('Select expiry date','error');return}
   if(!qty||qty<1){toast('Enter a valid quantity','error');return}
+
   let desc=$('#neDesc').value.trim();
-  if(!desc){const it=await lookupItemByCode(item);if(it)desc=it.description||''}
+  let itemType=neItemType;
+  if(!desc||itemType===null){
+    const it=await lookupItemByCode(item);
+    if(it){if(!desc)desc=it.description||'';itemType=it.item_type||''}
+  }
+  itemType=itemType||'';
+
+  // Enforce the admin's expiry window for this item type
+  const verdict=evaluateExpiry(itemType,expiry);
+  if(verdict.state==='bad'){toast(verdict.message,'error');return}
+
   try{
     await supaInsert('near_expire_items',[{
       store,item_code:item,description:desc,
       batch_number:batch,expiry_date:expiry,quantity:qty,
+      item_type:itemType,
+      rule_status:verdict.state==='unclassified'?'unclassified':'',
       notes:$('#neNotes').value.trim(),
       submitted_by:currentUser.display_name,
       submitted_at:new Date().toISOString(),
       exported:false
     }]);
-    toast('✅ Submitted');
+    toast(verdict.state==='unclassified'
+      ? '✅ Submitted — item type not configured yet, flagged for the admin'
+      : '✅ Submitted');
     resetPharmForm('ne');
+    neItemType=null;
+    $('#neRuleHint').className='rule-hint';
   }catch(e){toast('Error: '+e.message,'error')}
 }
 
@@ -2930,6 +2997,11 @@ function resetPharmForm(prefix){
   };
   (fields[prefix]||[]).forEach(id=>{const el=$('#'+id);if(el)el.value=''});
   if(prefix==='os') $('#osRecommendedGroup').style.display='none';
+  if(prefix==='ne'){
+    neItemType=null;
+    const h=$('#neRuleHint');if(h){h.className='rule-hint';h.textContent=''}
+    const d=$('#neExpiry');if(d){d.removeAttribute('min');d.removeAttribute('max')}
+  }
 }
 
 // ===== MY SUBMISSIONS =====
@@ -3117,7 +3189,7 @@ function exportMyPharmSubmissions(){
 function pharmExportRow(table,r){
   const base={Store:r.store||'','Item Code':r.item_code||'',Description:r.description||''};
   if(table==='sales_changes') Object.assign(base,{Status:r.status||''});
-  else if(table==='near_expire_items') Object.assign(base,{'Batch Number':r.batch_number||'','Expiry Date':r.expiry_date||'',Quantity:r.quantity||0});
+  else if(table==='near_expire_items') Object.assign(base,{'Item Type':r.item_type||'','Batch Number':r.batch_number||'','Expiry Date':r.expiry_date||'',Quantity:r.quantity||0,'Rule Flag':r.rule_status||''});
   else if(table==='alternative_items') Object.assign(base,{'Alternative Code':r.alternative_item_code||'','Alternative Description':r.alternative_description||''});
   else if(table==='overstock_items') Object.assign(base,{'Available Qty':r.available_qty||0,Action:r.action||'','Recommended Qty':r.recommended_qty||0});
   Object.assign(base,{
@@ -3159,8 +3231,12 @@ async function loadPharmFeedbackAdmin(){
   const who=$('#pfFilterPharmacist').value;
   const from=$('#pfFilterFrom').value;
   const to=$('#pfFilterTo').value;
+  const statusEl=$('#pfFilterStatus');
+  const status=statusEl?statusEl.value:'';
   if(store) all=all.filter(r=>r.store===store);
   if(who) all=all.filter(r=>r.submitted_by===who);
+  if(status==='new') all=all.filter(r=>!r.exported);
+  else if(status==='exported') all=all.filter(r=>!!r.exported);
   if(from) all=all.filter(r=>(r.submitted_at||'')>=from+'T00:00:00');
   if(to) all=all.filter(r=>(r.submitted_at||'')<=to+'T23:59:59');
   all.sort((a,b)=>String(b.submitted_at||'').localeCompare(String(a.submitted_at||'')));
@@ -3175,6 +3251,8 @@ async function loadPharmFeedbackAdmin(){
     <div class="kpi"><div class="num">${all.length-newRows}</div><div class="lbl">Exported</div></div>
     <div class="kpi"><div class="num">${stores}</div><div class="lbl">Stores</div></div>
     <div class="kpi"><div class="num">${pharmacists}</div><div class="lbl">Pharmacists</div></div>`;
+
+  renderFeedbackDashboard();
 
   const tbl=$('#pfAdminTable');
   if(!all.length){
@@ -3199,7 +3277,7 @@ function populatePfFilter(sel,values,allLabel){
 }
 
 function clearPharmFilters(){
-  ['pfFilterTab','pfFilterStore','pfFilterPharmacist','pfFilterFrom','pfFilterTo'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});
+  ['pfFilterTab','pfFilterStore','pfFilterPharmacist','pfFilterStatus','pfFilterFrom','pfFilterTo'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});
   loadPharmFeedbackAdmin();
 }
 
@@ -3492,7 +3570,8 @@ async function doStoreMasterUpload(rows,mapping){
 const ITEM_SPECS=[
   {field:'item_code',label:'Item Number',required:true,aliases:['item','item code','material','material code','material number','sku','code','item no','itemnumber','article']},
   {field:'description',label:'Description',aliases:['desc','item description','material description','name','item name','product name','short text']},
-  {field:'status',label:'Status',aliases:['item status','material status','state','type','category','flag']}
+  {field:'status',label:'Status',aliases:['item status','material status','state','flag']},
+  {field:'item_type',label:'Item Type',aliases:['type','category','item category','product type','material type','group','item group','class','classification','segment','family']}
 ];
 
 function handleItemMasterUpload(input){
@@ -3525,7 +3604,8 @@ async function doItemMasterUpload(rows,mapping){
     out.push({
       item_code:code,
       description:get(r,'description'),
-      status:get(r,'status')||'REGULAR'
+      status:get(r,'status')||'REGULAR',
+      item_type:get(r,'item_type')
     });
   }
   if(!out.length){toast('No valid items found','error');return}
@@ -3619,8 +3699,350 @@ async function saveUserModules(id){
   }catch(e){toast('Error: '+e.message,'error')}
 }
 
+// ============================================================
+// ===== EXPIRY RULES =========================================
+// ============================================================
+let EXPIRY_RULES={};      // normalized type -> {item_type,min_months,max_months}
+let ITEM_TYPES=[];        // distinct item types present in the catalog
+let neItemType=null;      // item type of the item currently typed in the Near Expire tab
+
+function normType(t){return String(t||'').trim().toLowerCase()}
+
+async function loadExpiryRules(){
+  try{
+    const rows=await supaFetchAll('expiry_rules','select=*&order=item_type.asc');
+    EXPIRY_RULES={};
+    rows.forEach(r=>{EXPIRY_RULES[normType(r.item_type)]=r});
+  }catch(e){console.error('loadExpiryRules',e);EXPIRY_RULES={}}
+}
+
+function addMonths(date,months){
+  const d=new Date(date.getTime());
+  const day=d.getDate();
+  d.setMonth(d.getMonth()+months);
+  // keep month arithmetic sane at month ends (31 Jan + 1 month -> 28/29 Feb)
+  if(d.getDate()<day) d.setDate(0);
+  return d;
+}
+function toISODate(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function fmtShort(d){
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+// Returns {state:'ok'|'bad'|'unclassified', message, from, to}
+function evaluateExpiry(itemType,expiryStr){
+  const rule=EXPIRY_RULES[normType(itemType)];
+  if(!rule){
+    return {state:'unclassified',
+      message:itemType
+        ? `No expiry rule set for type "${itemType}" — it will be flagged for the admin`
+        : 'This item has no type in the catalog — it will be flagged for the admin'};
+  }
+  const today=new Date();today.setHours(0,0,0,0);
+  const from=addMonths(today,rule.min_months);
+  const to=addMonths(today,rule.max_months);
+  const exp=new Date(expiryStr+'T00:00:00');
+  if(isNaN(exp.getTime())) return {state:'bad',message:'Invalid expiry date'};
+  if(exp<from) return {state:'bad',from,to,
+    message:`Expiry too close. For "${rule.item_type}" the date must be between ${fmtShort(from)} and ${fmtShort(to)}`};
+  if(exp>to) return {state:'bad',from,to,
+    message:`Expiry too far ahead. For "${rule.item_type}" the date must be between ${fmtShort(from)} and ${fmtShort(to)}`};
+  return {state:'ok',from,to,message:`Within the allowed window for "${rule.item_type}"`};
+}
+
+// Show the window as soon as an item is known, and bound the date picker
+function applyExpiryRuleHint(){
+  const hint=$('#neRuleHint');
+  const dateEl=$('#neExpiry');
+  if(!hint||!dateEl) return;
+  if(neItemType===null){hint.className='rule-hint';dateEl.removeAttribute('min');dateEl.removeAttribute('max');return}
+
+  const rule=EXPIRY_RULES[normType(neItemType)];
+  if(!rule){
+    hint.className='rule-hint show rule-warn';
+    hint.textContent=neItemType
+      ? `⚠ No expiry rule for type "${neItemType}". You can still submit — it will be flagged for the admin.`
+      : '⚠ This item has no type in the catalog. You can still submit — it will be flagged for the admin.';
+    dateEl.removeAttribute('min');dateEl.removeAttribute('max');
+    return;
+  }
+  const today=new Date();today.setHours(0,0,0,0);
+  const from=addMonths(today,rule.min_months),to=addMonths(today,rule.max_months);
+  dateEl.min=toISODate(from);dateEl.max=toISODate(to);
+  hint.className='rule-hint show rule-ok';
+  hint.textContent=`Type "${rule.item_type}" — allowed expiry between ${fmtShort(from)} and ${fmtShort(to)} (${rule.min_months}–${rule.max_months} months).`;
+  checkExpiryWindow();
+}
+
+function checkExpiryWindow(){
+  const hint=$('#neRuleHint');
+  const val=$('#neExpiry').value;
+  if(!hint||!val||neItemType===null) return;
+  const v=evaluateExpiry(neItemType,val);
+  if(v.state==='bad'){hint.className='rule-hint show rule-bad';hint.textContent='✕ '+v.message}
+  else if(v.state==='unclassified'){hint.className='rule-hint show rule-warn';hint.textContent='⚠ '+v.message}
+  else{hint.className='rule-hint show rule-ok';hint.textContent='✓ '+v.message}
+}
+
+// ===== Admin: rules tab =====
+async function loadExpiryRulesTab(){
+  await Promise.all([loadExpiryRules(),loadItemTypes()]);
+  const sel=$('#ruleType');
+  const current=sel.value;
+  sel.innerHTML='<option value="">Select type...</option>'+
+    ITEM_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('');
+  if(ITEM_TYPES.includes(current)) sel.value=current;
+  renderRulesTable();
+  renderRulePreview();
+  loadUnclassifiedAlert('#unclassifiedAlert');
+}
+
+async function loadItemTypes(){
+  try{
+    const rows=await supaFetchAll('items_catalog','select=item_type');
+    const set=new Set();
+    rows.forEach(r=>{const t=String(r.item_type||'').trim();if(t)set.add(t)});
+    ITEM_TYPES=[...set].sort();
+  }catch(e){console.error('loadItemTypes',e);ITEM_TYPES=[]}
+}
+
+function renderRulePreview(){
+  const min=parseInt($('#ruleMin').value)||0;
+  const max=parseInt($('#ruleMax').value)||0;
+  const box=$('#rulePreview');
+  if(!box) return;
+  if(max<=0||max<min){box.textContent='';return}
+  const today=new Date();today.setHours(0,0,0,0);
+  box.innerHTML=`With today's date, a pharmacist could enter expiry dates between <b>${fmtShort(addMonths(today,min))}</b> and <b>${fmtShort(addMonths(today,max))}</b>.`;
+}
+
+function renderRulesTable(){
+  const tbl=$('#rulesTable');
+  const rules=Object.values(EXPIRY_RULES).sort((a,b)=>String(a.item_type).localeCompare(String(b.item_type)));
+  if(!rules.length){
+    tbl.innerHTML='<tbody><tr><td style="padding:18px;text-align:center;color:var(--text-light)">No rules yet — add one above. Until a type has a rule, its items are accepted and flagged for you.</td></tr></tbody>';
+    return;
+  }
+  const today=new Date();today.setHours(0,0,0,0);
+  tbl.innerHTML='<thead><tr><th>Item Type</th><th>Min months</th><th>Max months</th><th>Allowed window today</th><th>Last updated</th><th></th></tr></thead><tbody>'+
+    rules.map(r=>`<tr>
+      <td><span class="type-badge">${r.item_type}</span></td>
+      <td>${r.min_months}</td><td>${r.max_months}</td>
+      <td style="font-size:11px">${fmtShort(addMonths(today,r.min_months))} → ${fmtShort(addMonths(today,r.max_months))}</td>
+      <td style="font-size:11px">${r.updated_at?formatDate(r.updated_at):''}${r.updated_by?' · '+r.updated_by:''}</td>
+      <td><button class="btn btn-sm btn-secondary" onclick="editExpiryRule('${String(r.item_type).replace(/'/g,"\\'")}')">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteExpiryRule('${r.id}','${String(r.item_type).replace(/'/g,"\\'")}')">🗑</button></td>
+    </tr>`).join('')+'</tbody>';
+}
+
+function editExpiryRule(type){
+  const r=EXPIRY_RULES[normType(type)];
+  if(!r) return;
+  $('#ruleType').value=r.item_type;
+  $('#ruleMin').value=r.min_months;
+  $('#ruleMax').value=r.max_months;
+  renderRulePreview();
+  $('#ruleType').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+async function saveExpiryRule(){
+  if(currentUser.role!=='admin'){toast('Admins only','error');return}
+  const type=$('#ruleType').value.trim();
+  const min=parseInt($('#ruleMin').value);
+  const max=parseInt($('#ruleMax').value);
+  if(!type){toast('Select an item type','error');return}
+  if(isNaN(min)||min<0){toast('Min months must be 0 or more','error');return}
+  if(isNaN(max)||max<1){toast('Max months must be 1 or more','error');return}
+  if(max<min){toast('Max months cannot be less than min months','error');return}
+
+  const existing=EXPIRY_RULES[normType(type)];
+  const payload={item_type:type,min_months:min,max_months:max,
+    updated_at:new Date().toISOString(),updated_by:currentUser.display_name};
+  try{
+    if(existing) await supaUpdate('expiry_rules',{id:existing.id},payload);
+    else await supaInsert('expiry_rules',[payload]);
+    toast(existing?'✅ Rule updated — applies to everyone now':'✅ Rule added — applies to everyone now');
+    await loadExpiryRulesTab();
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
+async function deleteExpiryRule(id,type){
+  if(currentUser.role!=='admin'){toast('Admins only','error');return}
+  if(!confirm(`Remove the rule for "${type}"?\n\nItems of this type will then be accepted with any expiry date and flagged for you.`)) return;
+  try{
+    await supaDelete('expiry_rules',[id]);
+    toast('Rule removed');
+    await loadExpiryRulesTab();
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
+// ===== Unclassified items alert =====
+async function loadUnclassifiedAlert(target){
+  const box=$(target);
+  if(!box) return;
+  try{
+    const rows=await supaFetchAll('near_expire_items','rule_status=eq.unclassified&select=item_code,description,item_type,store,submitted_by,submitted_at&order=submitted_at.desc');
+    if(!rows.length){box.innerHTML='';return}
+    const byItem={};
+    rows.forEach(r=>{
+      const k=r.item_code;
+      if(!byItem[k]) byItem[k]={code:k,desc:r.description,type:r.item_type,count:0};
+      byItem[k].count++;
+    });
+    const items=Object.values(byItem).sort((a,b)=>b.count-a.count);
+    box.innerHTML=`<div class="alert-box">
+      <h3>⚠ ${items.length} item${items.length>1?'s need':' needs'} a type or a rule</h3>
+      <p>These were submitted without a matching expiry rule, so no window could be enforced. Set the item's type in the Item Master, or add a rule for its type.</p>
+      <div>${items.slice(0,40).map(i=>`<span class="alert-chip"><b>${i.code}</b> ${i.desc||''}${i.type?' · <span class="unclassified-badge">'+i.type+'</span>':' · <span class="unclassified-badge">no type</span>'} ×${i.count}</span>`).join('')}</div>
+      ${items.length>40?`<p style="margin-top:8px">+ ${items.length-40} more</p>`:''}
+      <div style="margin-top:10px"><button class="btn btn-sm btn-secondary" onclick="clearUnclassifiedFlags()">✓ Mark all as reviewed</button></div>
+    </div>`;
+  }catch(e){box.innerHTML=''}
+}
+
+async function clearUnclassifiedFlags(){
+  if(!confirm('Clear the flag on all these rows? The rows stay, only the alert is dismissed.')) return;
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/near_expire_items?rule_status=eq.unclassified`,{
+      method:'PATCH',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({rule_status:'reviewed'})
+    });
+    toast('Alert cleared');
+    loadUnclassifiedAlert('#unclassifiedAlert');
+    loadUnclassifiedAlert('#fbUnclassifiedAlert');
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
+// ============================================================
+// ===== ADMINISTRATION PORTAL ================================
+// ============================================================
+async function initAdminSettings(){
+  if(currentUser.role!=='admin'){toast('Admins only','error');return}
+  loadUsers();
+  loadMasterDataStats();
+}
+
+// ============================================================
+// ===== PHARMACY FEEDBACK — ADMIN DASHBOARD ==================
+// ============================================================
+async function initFeedbackAdmin(){
+  if(!PHARM_STORES.length) await loadPharmStores();
+  await loadPharmFeedbackAdmin();
+}
+
+function renderFeedbackDashboard(){
+  const data=pfAdminData||[];
+  const total=data.length;
+  const newRows=data.filter(r=>!r.exported).length;
+  const pharmacists=new Set(data.map(r=>r.submitted_by).filter(Boolean)).size;
+  const stores=new Set(data.map(r=>r.store).filter(Boolean)).size;
+
+  $('#fbDashStats').innerHTML=`
+    <div class="kpi"><div class="num">${total}</div><div class="lbl">Total Submissions</div></div>
+    <div class="kpi"><div class="num">${newRows}</div><div class="lbl">New</div></div>
+    <div class="kpi"><div class="num">${total-newRows}</div><div class="lbl">Exported</div></div>
+    <div class="kpi"><div class="num">${pharmacists}</div><div class="lbl">Active Pharmacists</div></div>
+    <div class="kpi"><div class="num">${stores}</div><div class="lbl">Stores Covered</div></div>`;
+
+  // By type
+  const typeColors={sales_changes:'#0E7C86',near_expire_items:'#F59E0B',alternative_items:'#6366F1',overstock_items:'#DC2626'};
+  const counts={};
+  Object.keys(PHARM_TABLES).forEach(t=>{counts[t]=data.filter(r=>r._table===t).length});
+  $('#fbTypeCards').innerHTML=Object.entries(counts).map(([t,v])=>{
+    const m=PHARM_TABLES[t];const pct=total?Math.round(v/total*100):0;
+    return `<div style="background:#fff;border-radius:8px;padding:14px;border-left:4px solid ${typeColors[t]};box-shadow:var(--shadow)">
+      <div style="font-size:22px;font-weight:700;color:${typeColors[t]}">${v}</div>
+      <div style="font-size:11px;color:var(--text-light)">${m.icon} ${m.label}</div>
+      <div style="font-size:10px;color:var(--text-light)">${pct}%</div></div>`;
+  }).join('');
+
+  const maxV=Math.max(...Object.values(counts),1);
+  $('#fbChart').innerHTML=Object.entries(counts).map(([t,v])=>{
+    const h=Math.round(v/maxV*82);
+    return `<div class="bar-col"><div class="bar-val">${v}</div><div class="bar" style="height:${h}%;background:${typeColors[t]}"></div><div class="bar-label">${PHARM_TABLES[t].label}</div></div>`;
+  }).join('');
+
+  renderFbBreakdown(data,'#fbByPharmacist',r=>r.submitted_by||'Unknown');
+  renderFbBreakdown(data,'#fbByStore',r=>r.store||'Unknown');
+  renderFbTrend(data);
+  loadUnclassifiedAlert('#fbUnclassifiedAlert');
+}
+
+function renderFbBreakdown(data,target,accessor){
+  const groups={};
+  data.forEach(r=>{
+    const k=accessor(r);
+    if(!groups[k]) groups[k]={total:0,new:0,types:new Set()};
+    groups[k].total++;
+    if(!r.exported) groups[k].new++;
+    groups[k].types.add(r._table);
+  });
+  const el=$(target);
+  if(!el) return;
+  const entries=Object.entries(groups).sort((a,b)=>b[1].total-a[1].total);
+  if(!entries.length){el.innerHTML='<p style="font-size:12px;color:var(--text-light)">No data</p>';return}
+  el.innerHTML=entries.map(([name,s])=>
+    `<div class="breakdown-card"><div class="title">${name}</div>
+     <div class="stats">Total: <span>${s.total}</span> | New: <span>${s.new}</span> | Types: <span>${s.types.size}</span></div></div>`
+  ).join('');
+}
+
+function renderFbTrend(data){
+  const el=$('#fbTrend');
+  if(!el) return;
+  const days=[];
+  const today=new Date();today.setHours(0,0,0,0);
+  for(let i=13;i>=0;i--){
+    const d=new Date(today.getTime()-i*86400000);
+    days.push({key:toISODate(d),label:d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}),count:0});
+  }
+  const idx={};days.forEach(d=>{idx[d.key]=d});
+  data.forEach(r=>{
+    const k=String(r.submitted_at||'').slice(0,10);
+    if(idx[k]) idx[k].count++;
+  });
+  const maxV=Math.max(...days.map(d=>d.count),1);
+  el.innerHTML=days.map(d=>{
+    const h=Math.round(d.count/maxV*82);
+    return `<div class="bar-col"><div class="bar-val">${d.count||''}</div><div class="bar" style="height:${h}%;background:var(--primary)"></div><div class="bar-label">${d.label}</div></div>`;
+  }).join('');
+}
+
+function exportFbBreakdown(kind){
+  const data=pfAdminData||[];
+  if(!data.length){toast('No data to export','warning');return}
+  const accessor=kind==='pharmacist'?(r=>r.submitted_by||'Unknown'):(r=>r.store||'Unknown');
+  const label=kind==='pharmacist'?'Pharmacist':'Store';
+
+  const groups={};
+  data.forEach(r=>{const k=accessor(r);(groups[k]=groups[k]||[]).push(r)});
+
+  const wb=XLSX.utils.book_new();
+  const summary=[[label,'Total','New','Exported','Sales Changes','Near Expire','Alternatives','Overstock']];
+  Object.entries(groups).sort((a,b)=>b[1].length-a[1].length).forEach(([name,rows])=>{
+    summary.push([name,rows.length,
+      rows.filter(r=>!r.exported).length,
+      rows.filter(r=>r.exported).length,
+      rows.filter(r=>r._table==='sales_changes').length,
+      rows.filter(r=>r._table==='near_expire_items').length,
+      rows.filter(r=>r._table==='alternative_items').length,
+      rows.filter(r=>r._table==='overstock_items').length]);
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(summary),'Summary');
+
+  Object.keys(PHARM_TABLES).forEach(t=>{
+    const rows=data.filter(r=>r._table===t);
+    if(!rows.length) return;
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.map(r=>pharmExportRow(t,r))),PHARM_TABLES[t].label.substring(0,31));
+  });
+  XLSX.writeFile(wb,`feedback_by_${kind}_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
 init();
-console.log('PULSE v8.0 loaded — Pharmacy Feedback module');
+console.log('PULSE v9.0 loaded — modules, expiry rules, feedback dashboard');
 </script>
 </body>
 </html>
