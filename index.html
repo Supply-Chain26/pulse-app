@@ -129,6 +129,39 @@ select option.today-delivery{background:#D1FAE5}
 .breakdown-card .title{font-size:12px;font-weight:600;color:var(--navy)}
 .breakdown-card .stats{font-size:11px;color:var(--text-light);margin-top:4px}
 .breakdown-card .stats span{font-weight:600;color:var(--primary)}
+
+/* Module Selector */
+.module-selector{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.module-card{background:var(--card);border-radius:12px;padding:30px 24px;text-align:center;cursor:pointer;box-shadow:var(--shadow);border:2px solid transparent;transition:all .2s;width:220px}
+.module-card:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.module-card .icon{font-size:40px;margin-bottom:12px}
+.module-card .title{font-size:16px;font-weight:600;color:var(--navy)}
+.module-card .desc{font-size:12px;color:var(--text-light);margin-top:6px}
+.module-back-btn{position:absolute;left:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer}
+.module-back-btn:hover{background:rgba(255,255,255,.25)}
+
+/* Pharmacy Feedback Module */
+.pharm-form-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.pharm-form-card h2{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.pharm-store-badge{display:inline-flex;align-items:center;gap:6px;background:#E0F7FA;color:#00796B;padding:4px 12px;border-radius:16px;font-size:12px;font-weight:500}
+.pharm-item-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #f0f0f0}
+.pharm-item-row:last-child{border-bottom:none}
+.edit-badge{background:#FEF3C7;color:#92400E;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:500}
+.exported-badge{background:#D1FAE5;color:#065F46;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:500}
+
+/* Smart Mapping Dialog */
+.mapping-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:1100;display:flex;align-items:center;justify-content:center}
+.mapping-dialog{background:#fff;border-radius:12px;padding:24px;width:95%;max-width:600px;max-height:85vh;overflow-y:auto}
+.mapping-dialog h3{font-size:16px;font-weight:600;color:var(--navy);margin-bottom:16px}
+.mapping-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f5f5f5}
+.mapping-row .expected{font-size:13px;font-weight:500;color:var(--text);min-width:130px}
+.mapping-row .arrow{font-size:14px;color:var(--text-light)}
+.mapping-row select{flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit}
+.mapping-row .match-badge{font-size:10px;padding:2px 6px;border-radius:6px;font-weight:500}
+.match-exact{background:#D1FAE5;color:#065F46}
+.match-fuzzy{background:#FEF3C7;color:#92400E}
+.match-none{background:#FEE2E2;color:#991B1B}
+.mapping-preview{margin-top:16px;background:#F8FAFC;border-radius:8px;padding:12px;font-size:12px;color:var(--text-light)}
 </style>
 </head>
 <body>
@@ -166,6 +199,50 @@ select option.today-delivery{background:#D1FAE5}
 </div>
 </div>
 
+<!-- MODULE SELECTOR (shown when user has access to both modules) -->
+<div id="moduleSelector" class="hidden">
+<div class="gradient-bar"></div>
+<header>
+<div class="header-left">
+<img src="./logo.png" alt="">
+<div class="info">
+<div class="company">United Pharmacy</div>
+<div class="dept">Demand &amp; Inventory Team</div>
+</div>
+</div>
+<div class="header-center">
+<div class="pulse">PULSE</div>
+<div class="pulse-sub">Select Module</div>
+</div>
+<div style="width:120px;text-align:right">
+<button class="btn btn-sm btn-danger" onclick="doLogout()">Logout</button>
+</div>
+</header>
+<div class="user-bar">
+<div class="info">
+<span id="modUserName"></span>
+<span class="role-badge" id="modUserRole"></span>
+</div>
+</div>
+<div class="container" style="display:flex;justify-content:center;align-items:center;min-height:50vh">
+<div>
+<h2 style="text-align:center;color:var(--navy);margin-bottom:24px">اختر النظام</h2>
+<div class="module-selector">
+<div class="module-card" onclick="selectModule('pulse')">
+<div class="icon">📦</div>
+<div class="title">PULSE</div>
+<div class="desc">Pharmacy Urgent Live Stock Engine</div>
+</div>
+<div class="module-card" onclick="selectModule('feedback')">
+<div class="icon">💊</div>
+<div class="title">Pharmacy Feedback</div>
+<div class="desc">ملاحظات الصيدلية</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
 <!-- MAIN APP (hidden until login) -->
 <div id="mainApp" class="hidden">
 <div class="gradient-bar"></div>
@@ -190,6 +267,7 @@ select option.today-delivery{background:#D1FAE5}
 <span class="role-badge" id="userRoleBadge"></span>
 </div>
 <div style="display:flex;gap:8px;align-items:center">
+<button class="btn btn-sm btn-secondary" id="btnBackModules" onclick="showModuleSelector()" style="display:none">↩ Modules</button>
 <button class="btn btn-sm btn-secondary" onclick="showChangePassword()">🔑</button>
 <button class="btn btn-sm btn-danger" onclick="doLogout()">Logout</button>
 </div>
@@ -369,6 +447,8 @@ select option.today-delivery{background:#D1FAE5}
 <div class="tab" onclick="switchTab(this,'adminActions')">Actions</div>
 <div class="tab" onclick="switchTab(this,'adminBlocked')">Blocked Items</div>
 <div class="tab" onclick="switchTab(this,'adminCatalog')">Items Catalog</div>
+<div class="tab" onclick="switchTab(this,'adminMasterData')">Master Data</div>
+<div class="tab" onclick="switchTab(this,'adminPharmFeedback')">Pharmacy Feedback</div>
 </div>
 
 <div id="adminDash" class="tab-content active">
@@ -490,6 +570,267 @@ select option.today-delivery{background:#D1FAE5}
 </div>
 </div>
 </div>
+
+<div id="adminMasterData" class="tab-content">
+<div class="card">
+<h2>🏪 Store Master Upload</h2>
+<div id="storeMasterStats" style="margin-bottom:12px"></div>
+<p style="font-size:12px;color:var(--text-light);margin-bottom:8px">Upload Store Master Excel. Expected columns: Plant, City, Area Name, Supervisor, Area Manager, Head, Opening Date, Age in Days, Age, WH, Store Type</p>
+<input type="file" id="storeMasterInput" accept=".xlsx,.xls" onchange="handleStoreMasterUpload(this)">
+<div id="storeMasterMapping" class="hidden"></div>
+<div id="storeMasterProgress" class="hidden" style="margin-top:12px">
+<div style="background:#E8EDEF;border-radius:6px;height:20px;overflow:hidden">
+<div id="storeMasterBar" style="height:100%;background:var(--primary);width:0%;transition:width .3s;border-radius:6px"></div>
+</div>
+<p id="storeMasterText" style="font-size:12px;margin-top:4px;color:var(--text-light)"></p>
+</div>
+</div>
+<div class="card" style="margin-top:16px">
+<h2>📦 Item Master Upload</h2>
+<div id="itemMasterStats" style="margin-bottom:12px"></div>
+<p style="font-size:12px;color:var(--text-light);margin-bottom:8px">Upload Item Master Excel. Expected columns: Item Number, Description, Status. Column mapping is automatic.</p>
+<input type="file" id="itemMasterInput" accept=".xlsx,.xls" onchange="handleItemMasterUpload(this)">
+<div id="itemMasterMapping" class="hidden"></div>
+<div id="itemMasterProgress" class="hidden" style="margin-top:12px">
+<div style="background:#E8EDEF;border-radius:6px;height:20px;overflow:hidden">
+<div id="itemMasterBar" style="height:100%;background:var(--primary);width:0%;transition:width .3s;border-radius:6px"></div>
+</div>
+<p id="itemMasterText" style="font-size:12px;margin-top:4px;color:var(--text-light)"></p>
+</div>
+</div>
+</div>
+
+<div id="adminPharmFeedback" class="tab-content">
+<div class="card">
+<h2>💊 Pharmacy Feedback Data</h2>
+<div class="filter-row">
+<select id="pfFilterTab"><option value="">All Types</option><option value="sales_changes">Sales Changes</option><option value="near_expire_items">Near Expire</option><option value="alternative_items">Alternatives</option><option value="overstock_items">Overstock</option></select>
+<select id="pfFilterStore"><option value="">All Stores</option></select>
+<select id="pfFilterPharmacist"><option value="">All Pharmacists</option></select>
+<input type="date" id="pfFilterFrom" title="From date">
+<input type="date" id="pfFilterTo" title="To date">
+<button class="btn btn-sm btn-primary" onclick="loadPharmFeedbackAdmin()">🔍 Filter</button>
+<button class="btn btn-sm btn-secondary" onclick="clearPharmFilters()">✕ Clear</button>
+</div>
+<div id="pfAdminStats" class="kpi-row"></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+<button class="btn btn-sm btn-primary" onclick="exportPharmFeedback('all')">⬇ Export All</button>
+<button class="btn btn-sm btn-warning" onclick="exportPharmFeedback('unexported')">⬇ Export New (Mark Exported)</button>
+</div>
+<div class="table-wrap" style="max-height:500px"><table id="pfAdminTable"></table></div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- ===== PHARMACIST PORTAL ===== -->
+<div id="portalPharmacist" class="hidden">
+<div class="container">
+<div class="tabs">
+<div class="tab active" onclick="switchPharmTab(this,'pharmSalesChanges')">Sales Changes</div>
+<div class="tab" onclick="switchPharmTab(this,'pharmNearExpire')">Near Expire</div>
+<div class="tab" onclick="switchPharmTab(this,'pharmAlternative')">Alternatives</div>
+<div class="tab" onclick="switchPharmTab(this,'pharmOverstock')">Overstock</div>
+<div class="tab" onclick="switchPharmTab(this,'pharmMySubmissions')">My Submissions</div>
+</div>
+
+<!-- Store selector (shared across tabs) -->
+<div class="pharm-form-card" id="pharmStoreSelector">
+<h2>🏪 Select Store</h2>
+<div class="form-group" style="max-width:300px">
+<label>Store <span class="req">*</span></label>
+<div class="search-box">
+<input id="pharmStore" autocomplete="off" placeholder="Type store code..." oninput="searchPharmStores(this)" onfocus="searchPharmStores(this)">
+<div class="dropdown" id="pharmStoreDD"></div>
+</div>
+</div>
+<div id="pharmStoreInfo" style="margin-top:8px;font-size:12px;color:var(--text-light)"></div>
+</div>
+
+<!-- Tab 1: Sales Changes -->
+<div id="pharmSalesChanges" class="tab-content active">
+<div class="pharm-form-card">
+<h2>📋 Sales Changes</h2>
+<div class="form-grid">
+<div class="form-group">
+<label>Item Code <span class="req">*</span></label>
+<div class="search-box">
+<input id="scItemCode" autocomplete="off" placeholder="Search item..." oninput="searchPharmItems(this,'scItemDD','scDesc')">
+<div class="dropdown" id="scItemDD"></div>
+</div>
+</div>
+<div class="form-group">
+<label>Description</label>
+<input id="scDesc" readonly style="background:#f8f9fa">
+</div>
+<div class="form-group">
+<label>Status <span class="req">*</span></label>
+<select id="scStatus">
+<option value="">Select...</option>
+<option value="Open">Open</option>
+<option value="Close">Close</option>
+<option value="Coverage Uplift">Coverage Uplift</option>
+<option value="Coverage Downlift">Coverage Downlift</option>
+</select>
+</div>
+<div class="form-group">
+<label>Notes</label>
+<input id="scNotes" placeholder="Optional notes...">
+</div>
+</div>
+<div style="margin-top:12px">
+<button class="btn btn-primary" onclick="submitSalesChange()">Submit</button>
+<button class="btn btn-secondary" onclick="resetPharmForm('sc')">Clear</button>
+</div>
+</div>
+</div>
+
+<!-- Tab 2: Near Expire Items -->
+<div id="pharmNearExpire" class="tab-content">
+<div class="pharm-form-card">
+<h2>⏰ Near Expire Items</h2>
+<div class="form-grid">
+<div class="form-group">
+<label>Item Code <span class="req">*</span></label>
+<div class="search-box">
+<input id="neItemCode" autocomplete="off" placeholder="Search item..." oninput="searchPharmItems(this,'neItemDD','neDesc')">
+<div class="dropdown" id="neItemDD"></div>
+</div>
+</div>
+<div class="form-group">
+<label>Description</label>
+<input id="neDesc" readonly style="background:#f8f9fa">
+</div>
+<div class="form-group">
+<label>Batch Number <span class="req">*</span></label>
+<input id="neBatch" placeholder="Batch number">
+</div>
+<div class="form-group">
+<label>Expiry Date <span class="req">*</span></label>
+<input type="date" id="neExpiry">
+</div>
+<div class="form-group">
+<label>Quantity <span class="req">*</span></label>
+<input type="number" id="neQty" min="1" placeholder="Qty">
+</div>
+<div class="form-group">
+<label>Notes</label>
+<input id="neNotes" placeholder="Optional notes...">
+</div>
+</div>
+<div style="margin-top:12px">
+<button class="btn btn-primary" onclick="submitNearExpire()">Submit</button>
+<button class="btn btn-secondary" onclick="resetPharmForm('ne')">Clear</button>
+</div>
+</div>
+</div>
+
+<!-- Tab 3: Alternative Items -->
+<div id="pharmAlternative" class="tab-content">
+<div class="pharm-form-card">
+<h2>🔄 Alternative Items</h2>
+<div class="form-grid">
+<div class="form-group">
+<label>Original Item Code <span class="req">*</span></label>
+<div class="search-box">
+<input id="altItemCode" autocomplete="off" placeholder="Search original item..." oninput="searchPharmItems(this,'altItemDD','altDesc')">
+<div class="dropdown" id="altItemDD"></div>
+</div>
+</div>
+<div class="form-group">
+<label>Original Description</label>
+<input id="altDesc" readonly style="background:#f8f9fa">
+</div>
+<div class="form-group">
+<label>Alternative Item Code <span class="req">*</span></label>
+<div class="search-box">
+<input id="altAltCode" autocomplete="off" placeholder="Search alternative..." oninput="searchPharmItems(this,'altAltDD','altAltDesc')">
+<div class="dropdown" id="altAltDD"></div>
+</div>
+</div>
+<div class="form-group">
+<label>Alternative Description</label>
+<input id="altAltDesc" readonly style="background:#f8f9fa">
+</div>
+<div class="form-group full">
+<label>Notes</label>
+<input id="altNotes" placeholder="Optional notes...">
+</div>
+</div>
+<div style="margin-top:12px">
+<button class="btn btn-primary" onclick="submitAlternative()">Submit</button>
+<button class="btn btn-secondary" onclick="resetPharmForm('alt')">Clear</button>
+</div>
+</div>
+</div>
+
+<!-- Tab 4: Overstock Items -->
+<div id="pharmOverstock" class="tab-content">
+<div class="pharm-form-card">
+<h2>📈 Overstock Items</h2>
+<div class="form-grid">
+<div class="form-group">
+<label>Item Code <span class="req">*</span></label>
+<div class="search-box">
+<input id="osItemCode" autocomplete="off" placeholder="Search item..." oninput="searchPharmItems(this,'osItemDD','osDesc')">
+<div class="dropdown" id="osItemDD"></div>
+</div>
+</div>
+<div class="form-group">
+<label>Description</label>
+<input id="osDesc" readonly style="background:#f8f9fa">
+</div>
+<div class="form-group">
+<label>Available Qty <span class="req">*</span></label>
+<input type="number" id="osAvailQty" min="1" placeholder="Available quantity">
+</div>
+<div class="form-group">
+<label>Action <span class="req">*</span></label>
+<select id="osAction" onchange="onOverstockActionChange()">
+<option value="">Select...</option>
+<option value="ALL">ALL (return everything)</option>
+<option value="Partial">Partial (specify qty)</option>
+</select>
+</div>
+<div class="form-group" id="osRecommendedGroup" style="display:none">
+<label>Recommended Qty <span class="req">*</span></label>
+<input type="number" id="osRecommendedQty" min="1" placeholder="Recommended quantity to return">
+</div>
+<div class="form-group">
+<label>Notes</label>
+<input id="osNotes" placeholder="Optional notes...">
+</div>
+</div>
+<div style="margin-top:12px">
+<button class="btn btn-primary" onclick="submitOverstock()">Submit</button>
+<button class="btn btn-secondary" onclick="resetPharmForm('os')">Clear</button>
+</div>
+</div>
+</div>
+
+<!-- Tab 5: My Submissions -->
+<div id="pharmMySubmissions" class="tab-content">
+<div class="pharm-form-card">
+<h2>📄 My Submissions</h2>
+<div class="filter-row">
+<select id="myPharmFilter">
+<option value="">All Types</option>
+<option value="sales_changes">Sales Changes</option>
+<option value="near_expire_items">Near Expire</option>
+<option value="alternative_items">Alternatives</option>
+<option value="overstock_items">Overstock</option>
+</select>
+<input type="date" id="myPharmFrom" title="From">
+<input type="date" id="myPharmTo" title="To">
+<button class="btn btn-sm btn-primary" onclick="loadMyPharmSubmissions()">🔍 Filter</button>
+<button class="btn btn-sm btn-primary" onclick="exportMyPharmSubmissions()">⬇ Export</button>
+</div>
+<div id="myPharmStats" class="kpi-row" style="margin-bottom:12px"></div>
+<div class="table-wrap" style="max-height:500px"><table id="myPharmTable"></table></div>
+</div>
+</div>
+
 </div>
 </div>
 </div>
@@ -574,6 +915,8 @@ function switchTab(el,id){
   if(id==='adminActions') renderActions();
   if(id==='adminBlocked') loadBlockedStats();
   if(id==='adminCatalog') loadCatalogStats();
+  if(id==='adminMasterData') loadMasterDataStats();
+  if(id==='adminPharmFeedback') loadPharmFeedbackAdmin();
   if(id==='captainHistory') loadCaptainHistory();
   if(id==='captainSchedule') loadScheduleTable();
 }
@@ -657,9 +1000,9 @@ async function init(){
     const users=await supaFetchAll('app_users','select=username,display_name,role&order=role.asc,display_name.asc');
     const sel=$('#loginUser');
     sel.innerHTML='<option value="">Select user...</option>';
-    const groups={admin:[],manager:[],supervisor:[],captain:[]};
+    const groups={admin:[],manager:[],supervisor:[],captain:[],pharmacist:[]};
     users.forEach(u=>{if(groups[u.role]) groups[u.role].push(u)});
-    const labels={admin:'Admin',manager:'Managers',supervisor:'Supervisors',captain:'Captains'};
+    const labels={admin:'Admin',manager:'Managers',supervisor:'Supervisors',captain:'Captains',pharmacist:'Pharmacists'};
     Object.entries(groups).forEach(([role,list])=>{
       if(!list.length) return;
       const og=document.createElement('optgroup');
@@ -705,23 +1048,65 @@ function doLogout(){
   currentUser=null;
   sessionStorage.removeItem('sfUser');
   $('#mainApp').classList.add('hidden');
+  $('#moduleSelector').classList.add('hidden');
   $('#loginScreen').classList.remove('hidden');
-  ['portalCaptain','portalSupervisor','portalManager','portalAdmin'].forEach(id=>$('#'+id).classList.add('hidden'));
+  ['portalCaptain','portalSupervisor','portalManager','portalAdmin','portalPharmacist'].forEach(id=>$('#'+id).classList.add('hidden'));
 }
 
 function showPortal(){
+  const modules=(currentUser.allowed_modules||'pulse').split(',').map(m=>m.trim());
+  const role=currentUser.role;
+
+  // If user has access to both modules, show selector (unless already selected)
+  if(modules.includes('pulse')&&modules.includes('feedback')&&!currentUser._activeModule){
+    $('#loginScreen').classList.add('hidden');
+    $('#mainApp').classList.add('hidden');
+    $('#moduleSelector').classList.remove('hidden');
+    $('#modUserName').textContent=currentUser.display_name;
+    $('#modUserRole').textContent=role.toUpperCase();
+    return;
+  }
+
+  const activeModule=currentUser._activeModule||(modules.includes('pulse')?'pulse':'feedback');
+
   $('#loginScreen').classList.add('hidden');
+  $('#moduleSelector').classList.add('hidden');
   $('#mainApp').classList.remove('hidden');
   $('#userDisplayName').textContent=currentUser.display_name;
-  $('#userRoleBadge').textContent=currentUser.role.toUpperCase();
-  
-  const role=currentUser.role;
-  ['portalCaptain','portalSupervisor','portalManager','portalAdmin'].forEach(id=>$('#'+id).classList.add('hidden'));
-  
-  if(role==='captain') {$('#portalCaptain').classList.remove('hidden');initCaptainPortal()}
-  else if(role==='supervisor'){$('#portalSupervisor').classList.remove('hidden');initSupPortal()}
-  else if(role==='manager'){$('#portalManager').classList.remove('hidden');initMgrPortal()}
-  else if(role==='admin'){$('#portalAdmin').classList.remove('hidden');initAdminPortal()}
+  $('#userRoleBadge').textContent=role.toUpperCase();
+
+  // Show back button if user has both modules
+  const backBtn=$('#btnBackModules');
+  if(backBtn) backBtn.style.display=(modules.includes('pulse')&&modules.includes('feedback'))?'inline-flex':'none';
+
+  ['portalCaptain','portalSupervisor','portalManager','portalAdmin','portalPharmacist'].forEach(id=>$('#'+id).classList.add('hidden'));
+
+  if(activeModule==='feedback'){
+    $('#portalPharmacist').classList.remove('hidden');
+    initPharmacistPortal();
+  } else {
+    if(role==='captain') {$('#portalCaptain').classList.remove('hidden');initCaptainPortal()}
+    else if(role==='supervisor'){$('#portalSupervisor').classList.remove('hidden');initSupPortal()}
+    else if(role==='manager'){$('#portalManager').classList.remove('hidden');initMgrPortal()}
+    else if(role==='admin'){$('#portalAdmin').classList.remove('hidden');initAdminPortal()}
+    else if(role==='pharmacist'){$('#portalPharmacist').classList.remove('hidden');initPharmacistPortal()}
+  }
+}
+
+function selectModule(mod){
+  currentUser._activeModule=mod;
+  sessionStorage.setItem('sfUser',JSON.stringify(currentUser));
+  showPortal();
+}
+
+function showModuleSelector(){
+  currentUser._activeModule=null;
+  sessionStorage.setItem('sfUser',JSON.stringify(currentUser));
+  $('#mainApp').classList.add('hidden');
+  ['portalCaptain','portalSupervisor','portalManager','portalAdmin','portalPharmacist'].forEach(id=>$('#'+id).classList.add('hidden'));
+  $('#moduleSelector').classList.remove('hidden');
+  $('#modUserName').textContent=currentUser.display_name;
+  $('#modUserRole').textContent=currentUser.role.toUpperCase();
 }
 
 function showChangePassword(){
@@ -1897,23 +2282,36 @@ async function confirmActionUpload(){
 
 // ===== USER MANAGEMENT =====
 async function loadUsers(){
-  const users=await supaFetchAll('app_users','select=id,username,display_name,role,sales_type,supervisor,area&order=role.asc,display_name.asc');
+  const users=await supaFetchAll('app_users','select=id,username,display_name,role,sales_type,supervisor,area,allowed_modules&order=role.asc,display_name.asc');
   const tbl=$('#usersTable');
-  tbl.innerHTML='<thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Sales Type</th><th>Supervisor</th><th>Area</th><th></th></tr></thead><tbody>'+
-    users.map(u=>`<tr><td>${u.display_name}</td><td>${u.username}</td><td>${u.role}</td><td>${u.sales_type||''}</td><td>${u.supervisor||''}</td><td>${u.area||''}</td>
-    <td><button class="btn btn-sm btn-secondary" onclick="resetUserPass('${u.id}','${u.display_name}')">🔑</button> <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}','${u.display_name}')">🗑</button></td></tr>`).join('')+
+  tbl.innerHTML='<thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Modules</th><th>Sales Type</th><th>Supervisor</th><th>Area</th><th></th></tr></thead><tbody>'+
+    users.map(u=>{
+      const mods=(u.allowed_modules||'pulse').split(',');
+      const modBadges=mods.map(m=>{
+        if(m.trim()==='pulse') return '<span style="background:#DBEAFE;color:#1E40AF;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:500">PULSE</span>';
+        if(m.trim()==='feedback') return '<span style="background:#D1FAE5;color:#065F46;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:500">Feedback</span>';
+        return '';
+      }).join(' ');
+      return `<tr><td>${u.display_name}</td><td>${u.username}</td><td>${u.role}</td><td>${modBadges}</td><td>${u.sales_type||''}</td><td>${u.supervisor||''}</td><td>${u.area||''}</td>
+      <td><button class="btn btn-sm btn-secondary" onclick="editUserModules('${u.id}','${u.display_name}','${u.allowed_modules||'pulse'}')">⚙</button> <button class="btn btn-sm btn-secondary" onclick="resetUserPass('${u.id}','${u.display_name}')">🔑</button> <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}','${u.display_name}')">🗑</button></td></tr>`;
+    }).join('')+
     '</tbody>';
 }
 
 function showAddUser(){
   const supOptions=Object.keys(SUP_STORES).sort().map(s=>`<option value="${s}">${s}</option>`).join('');
   const areaOptions=AREAS.map(a=>`<option value="${a}">${a}</option>`).join('');
-  
+
   showModal(`<h3>Add User</h3>
     <div class="form-group" style="margin-bottom:8px"><label>Display Name</label><input id="nuName"></div>
     <div class="form-group" style="margin-bottom:8px"><label>Username (login)</label><input id="nuUser"></div>
     <div class="form-group" style="margin-bottom:8px"><label>Role</label>
-    <select id="nuRole" onchange="onNewUserRoleChange()"><option value="captain">Captain</option><option value="supervisor">Supervisor</option><option value="manager">Manager</option><option value="admin">Admin</option></select></div>
+    <select id="nuRole" onchange="onNewUserRoleChange()"><option value="captain">Captain</option><option value="supervisor">Supervisor</option><option value="manager">Manager</option><option value="admin">Admin</option><option value="pharmacist">Pharmacist</option></select></div>
+    <div class="form-group" style="margin-bottom:8px"><label>Module Access</label>
+    <div style="display:flex;gap:12px;padding:4px 0">
+      <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="nuModPulse" checked> PULSE</label>
+      <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="nuModFeedback"> Pharmacy Feedback</label>
+    </div></div>
     <div class="form-group" style="margin-bottom:8px" id="nuSalesGroup"><label>Sales Type</label>
     <select id="nuSales"><option value="Cash">Cash</option><option value="Insurance">Insurance</option><option value="Wasfaty">Wasfaty</option></select></div>
     <div class="form-group" style="margin-bottom:8px" id="nuSupGroup"><label>Supervisor</label>
@@ -1922,6 +2320,7 @@ function showAddUser(){
     <select id="nuArea"><option value="">Select...</option>${areaOptions}</select></div>
     <p style="font-size:11px;color:var(--text-light);margin-bottom:12px">Default password: 123456</p>
     <div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="addUser()">Add</button><button class="btn btn-secondary" onclick="hideModal()">Cancel</button></div>`);
+  onNewUserRoleChange();
 }
 
 function onNewUserRoleChange(){
@@ -1929,6 +2328,11 @@ function onNewUserRoleChange(){
   $('#nuSalesGroup').style.display=role==='captain'?'flex':'none';
   $('#nuSupGroup').style.display=(role==='captain')?'flex':'none';
   $('#nuAreaGroup').style.display=(role==='captain'||role==='supervisor')?'flex':'none';
+  // Auto-check modules for pharmacist
+  if(role==='pharmacist'){
+    if($('#nuModPulse'))$('#nuModPulse').checked=false;
+    if($('#nuModFeedback'))$('#nuModFeedback').checked=true;
+  }
 }
 
 async function addUser(){
@@ -1938,11 +2342,16 @@ async function addUser(){
   if(!name||!user){toast('Fill name and username','error');return}
   
   const hash=await sha256('123456');
+  const mods=[];
+  if($('#nuModPulse')&&$('#nuModPulse').checked) mods.push('pulse');
+  if($('#nuModFeedback')&&$('#nuModFeedback').checked) mods.push('feedback');
+  if(!mods.length) mods.push('pulse');
   const data={
     username:user,display_name:name,role:role,password_hash:hash,
     sales_type:role==='captain'?$('#nuSales').value:'',
     supervisor:role==='captain'?$('#nuSup').value:'',
-    area:$('#nuArea').value||''
+    area:$('#nuArea').value||'',
+    allowed_modules:mods.join(',')
   };
   
   try{
@@ -2230,8 +2639,988 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.getRegistrations().then(regs=>{regs.forEach(r=>r.unregister())});
 }
 
+// ============================================================
+// ===== PHARMACY FEEDBACK MODULE =============================
+// ============================================================
+
+let PHARM_STORES=[];          // list of store codes from `stores` table
+let PHARM_STORE_INFO={};      // code -> row
+let myPharmData=[];           // my submissions (merged)
+let pfAdminData=[];           // admin view data
+let pendingMasterUpload=null; // {type,rows,headers,mapping}
+
+const PHARM_TABLES={
+  sales_changes:{label:'Sales Changes',icon:'📋'},
+  near_expire_items:{label:'Near Expire',icon:'⏰'},
+  alternative_items:{label:'Alternatives',icon:'🔄'},
+  overstock_items:{label:'Overstock',icon:'📈'}
+};
+
+// ===== INIT =====
+async function initPharmacistPortal(){
+  await loadPharmStores();
+  // Restore last used store for convenience
+  const last=localStorage.getItem('pharm_last_store');
+  if(last&&PHARM_STORE_INFO[last]){
+    $('#pharmStore').value=last;
+    showPharmStoreInfo(last);
+  }
+}
+
+async function loadPharmStores(){
+  try{
+    const rows=await supaFetchAll('stores','select=*&order=plant.asc');
+    PHARM_STORES=[];PHARM_STORE_INFO={};
+    rows.forEach(r=>{
+      const code=String(r.plant||'').trim().toUpperCase();
+      if(!code) return;
+      PHARM_STORES.push(code);
+      PHARM_STORE_INFO[code]=r;
+    });
+    // Fallback to embedded STORES if the stores table is still empty
+    if(!PHARM_STORES.length){
+      PHARM_STORES=Object.keys(STORES).filter(s=>!EXCLUDED_STORES.has(s)).sort();
+      PHARM_STORES.forEach(c=>{
+        const i=STORES[c]||{};
+        PHARM_STORE_INFO[c]={plant:c,area_name:i.a||'',supervisor:i.s||'',area_manager:i.m||'',city:'',store_type:''};
+      });
+    }
+  }catch(e){
+    console.error('loadPharmStores failed',e);
+    PHARM_STORES=Object.keys(STORES).filter(s=>!EXCLUDED_STORES.has(s)).sort();
+  }
+}
+
+function searchPharmStores(input){
+  const q=input.value.trim().toUpperCase();
+  const dd=$('#pharmStoreDD');
+  let matches=PHARM_STORES;
+  if(q) matches=PHARM_STORES.filter(c=>c.includes(q));
+  matches=matches.slice(0,50);
+  if(!matches.length){
+    dd.innerHTML='<div class="dd-item" style="color:var(--text-light)">No stores found</div>';
+    dd.classList.add('show');return;
+  }
+  dd.innerHTML=matches.map(code=>{
+    const i=PHARM_STORE_INFO[code]||{};
+    const extra=[i.city,i.area_name].filter(Boolean).join(' · ');
+    return `<div class="dd-item" onclick="selectPharmStore('${code}')"><span class="code">${code}</span> <span class="desc">${extra}</span></div>`;
+  }).join('');
+  dd.classList.add('show');
+}
+
+function selectPharmStore(code){
+  $('#pharmStore').value=code;
+  $('#pharmStoreDD').classList.remove('show');
+  localStorage.setItem('pharm_last_store',code);
+  showPharmStoreInfo(code);
+}
+
+function showPharmStoreInfo(code){
+  const i=PHARM_STORE_INFO[code];
+  const box=$('#pharmStoreInfo');
+  if(!i){box.innerHTML='';return}
+  const bits=[];
+  if(i.city) bits.push('City: '+i.city);
+  if(i.area_name) bits.push('Area: '+i.area_name);
+  if(i.supervisor) bits.push('Supervisor: '+i.supervisor);
+  if(i.store_type) bits.push('Type: '+i.store_type);
+  box.innerHTML=bits.length?`<span class="pharm-store-badge">🏪 ${code}</span> <span style="margin-left:8px">${bits.join(' | ')}</span>`:`<span class="pharm-store-badge">🏪 ${code}</span>`;
+}
+
+function getPharmStore(){
+  const code=$('#pharmStore').value.trim().toUpperCase();
+  if(!code){toast('Select a store first','error');return null}
+  if(PHARM_STORES.length&&!PHARM_STORE_INFO[code]){toast('Invalid store code','error');return null}
+  return code;
+}
+
+// ===== TABS =====
+function switchPharmTab(el,id){
+  el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const parent=el.closest('.container');
+  parent.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  const target=document.getElementById(id);
+  if(target) target.classList.add('active');
+  // Store selector only matters on the entry tabs
+  $('#pharmStoreSelector').style.display=(id==='pharmMySubmissions')?'none':'block';
+  if(id==='pharmMySubmissions') loadMyPharmSubmissions();
+}
+
+// ===== ITEM SEARCH (shared by all pharm tabs) =====
+let pharmSearchTimeout=null;
+function searchPharmItems(input,ddId,descId){
+  clearTimeout(pharmSearchTimeout);
+  const inputId=input.id;
+  pharmSearchTimeout=setTimeout(async()=>{
+    const q=input.value.trim();
+    const dd=$('#'+ddId);
+    if(q.length<2){dd.classList.remove('show');return}
+    try{
+      const isNum=/^\d+$/.test(q);
+      const query=isNum
+        ? `item_code=like.*${q}*&limit=30&select=item_code,description,status`
+        : `or=(item_code.ilike.*${encodeURIComponent(q)}*,description.ilike.*${encodeURIComponent(q)}*)&limit=30&select=item_code,description,status`;
+      const res=await fetch(`${SUPABASE_URL}/rest/v1/items_catalog?${query}`,{
+        headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+      });
+      const matches=await res.json();
+      if(!Array.isArray(matches)||!matches.length){
+        dd.innerHTML='<div class="dd-item" style="color:var(--text-light)">No results — you can type the code manually</div>';
+        dd.classList.add('show');return;
+      }
+      dd.innerHTML=matches.map(it=>{
+        const safeDesc=(it.description||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+        return `<div class="dd-item" onclick="selectPharmItem('${it.item_code}','${safeDesc}','${inputId}','${descId}','${ddId}')"><span class="code">${it.item_code}</span> <span class="desc">${it.description||''}</span></div>`;
+      }).join('');
+      dd.classList.add('show');
+    }catch(e){
+      dd.innerHTML='<div class="dd-item" style="color:var(--text-light)">Search error — type code manually</div>';
+      dd.classList.add('show');
+    }
+  },300);
+  // Exact-code auto-fill
+  const code=input.value.trim();
+  if(/^\d{4,}$/.test(code)){
+    setTimeout(async()=>{
+      if($('#'+inputId).value.trim()!==code) return;
+      const item=await lookupItemByCode(code);
+      if(item){
+        $('#'+descId).value=item.description||'';
+        $('#'+ddId).classList.remove('show');
+      }
+    },450);
+  }
+}
+
+function selectPharmItem(code,desc,inputId,descId,ddId){
+  $('#'+inputId).value=code;
+  $('#'+descId).value=desc;
+  $('#'+ddId).classList.remove('show');
+}
+
+// ===== SUBMIT: Sales Changes =====
+async function submitSalesChange(){
+  const store=getPharmStore();if(!store)return;
+  const item=$('#scItemCode').value.trim();
+  const status=$('#scStatus').value;
+  if(!item){toast('Enter item code','error');return}
+  if(!status){toast('Select status','error');return}
+  let desc=$('#scDesc').value.trim();
+  if(!desc){const it=await lookupItemByCode(item);if(it)desc=it.description||''}
+  try{
+    await supaInsert('sales_changes',[{
+      store,item_code:item,description:desc,status,
+      notes:$('#scNotes').value.trim(),
+      submitted_by:currentUser.display_name,
+      submitted_at:new Date().toISOString(),
+      exported:false
+    }]);
+    toast('✅ Submitted');
+    resetPharmForm('sc');
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
+// ===== SUBMIT: Near Expire =====
+async function submitNearExpire(){
+  const store=getPharmStore();if(!store)return;
+  const item=$('#neItemCode').value.trim();
+  const batch=$('#neBatch').value.trim();
+  const expiry=$('#neExpiry').value;
+  const qty=parseInt($('#neQty').value);
+  if(!item){toast('Enter item code','error');return}
+  if(!batch){toast('Enter batch number','error');return}
+  if(!expiry){toast('Select expiry date','error');return}
+  if(!qty||qty<1){toast('Enter a valid quantity','error');return}
+  let desc=$('#neDesc').value.trim();
+  if(!desc){const it=await lookupItemByCode(item);if(it)desc=it.description||''}
+  try{
+    await supaInsert('near_expire_items',[{
+      store,item_code:item,description:desc,
+      batch_number:batch,expiry_date:expiry,quantity:qty,
+      notes:$('#neNotes').value.trim(),
+      submitted_by:currentUser.display_name,
+      submitted_at:new Date().toISOString(),
+      exported:false
+    }]);
+    toast('✅ Submitted');
+    resetPharmForm('ne');
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
+// ===== SUBMIT: Alternative Items =====
+async function submitAlternative(){
+  const store=getPharmStore();if(!store)return;
+  const item=$('#altItemCode').value.trim();
+  const alt=$('#altAltCode').value.trim();
+  if(!item){toast('Enter original item code','error');return}
+  if(!alt){toast('Enter alternative item code','error');return}
+  if(item===alt){toast('Alternative must be different from the original item','error');return}
+  let desc=$('#altDesc').value.trim();
+  if(!desc){const it=await lookupItemByCode(item);if(it)desc=it.description||''}
+  let altDesc=$('#altAltDesc').value.trim();
+  if(!altDesc){const it=await lookupItemByCode(alt);if(it)altDesc=it.description||''}
+  try{
+    await supaInsert('alternative_items',[{
+      store,item_code:item,description:desc,
+      alternative_item_code:alt,alternative_description:altDesc,
+      notes:$('#altNotes').value.trim(),
+      submitted_by:currentUser.display_name,
+      submitted_at:new Date().toISOString(),
+      exported:false
+    }]);
+    toast('✅ Submitted');
+    resetPharmForm('alt');
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
+// ===== SUBMIT: Overstock =====
+function onOverstockActionChange(){
+  const v=$('#osAction').value;
+  const grp=$('#osRecommendedGroup');
+  if(v==='Partial'){
+    grp.style.display='flex';
+    $('#osRecommendedQty').value='';
+  }else{
+    grp.style.display='none';
+    // ALL → recommended = available
+    $('#osRecommendedQty').value=$('#osAvailQty').value||'';
+  }
+}
+
+async function submitOverstock(){
+  const store=getPharmStore();if(!store)return;
+  const item=$('#osItemCode').value.trim();
+  const avail=parseInt($('#osAvailQty').value);
+  const action=$('#osAction').value;
+  if(!item){toast('Enter item code','error');return}
+  if(!avail||avail<1){toast('Enter a valid available quantity','error');return}
+  if(!action){toast('Select an action','error');return}
+  let recommended;
+  if(action==='ALL'){
+    recommended=avail;
+  }else{
+    recommended=parseInt($('#osRecommendedQty').value);
+    if(!recommended||recommended<1){toast('Enter the recommended quantity','error');return}
+    if(recommended>avail){toast('Recommended quantity cannot exceed available quantity','error');return}
+  }
+  let desc=$('#osDesc').value.trim();
+  if(!desc){const it=await lookupItemByCode(item);if(it)desc=it.description||''}
+  try{
+    await supaInsert('overstock_items',[{
+      store,item_code:item,description:desc,
+      available_qty:avail,recommended_qty:recommended,action,
+      notes:$('#osNotes').value.trim(),
+      submitted_by:currentUser.display_name,
+      submitted_at:new Date().toISOString(),
+      exported:false
+    }]);
+    toast('✅ Submitted');
+    resetPharmForm('os');
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
+function resetPharmForm(prefix){
+  const fields={
+    sc:['scItemCode','scDesc','scStatus','scNotes'],
+    ne:['neItemCode','neDesc','neBatch','neExpiry','neQty','neNotes'],
+    alt:['altItemCode','altDesc','altAltCode','altAltDesc','altNotes'],
+    os:['osItemCode','osDesc','osAvailQty','osAction','osRecommendedQty','osNotes']
+  };
+  (fields[prefix]||[]).forEach(id=>{const el=$('#'+id);if(el)el.value=''});
+  if(prefix==='os') $('#osRecommendedGroup').style.display='none';
+}
+
+// ===== MY SUBMISSIONS =====
+async function loadMyPharmSubmissions(){
+  const who=currentUser.display_name;
+  const typeFilter=$('#myPharmFilter').value;
+  const from=$('#myPharmFrom').value;
+  const to=$('#myPharmTo').value;
+  const tables=typeFilter?[typeFilter]:Object.keys(PHARM_TABLES);
+
+  $('#myPharmTable').innerHTML='<tbody><tr><td style="padding:20px;text-align:center;color:var(--text-light)">Loading…</td></tr></tbody>';
+
+  let all=[];
+  for(const t of tables){
+    try{
+      const rows=await supaFetchAll(t,`submitted_by=eq.${encodeURIComponent(who)}&select=*&order=submitted_at.desc`);
+      rows.forEach(r=>{r._table=t});
+      all=all.concat(rows);
+    }catch(e){console.error('load '+t,e)}
+  }
+  if(from) all=all.filter(r=>(r.submitted_at||'')>=from+'T00:00:00');
+  if(to) all=all.filter(r=>(r.submitted_at||'')<=to+'T23:59:59');
+  all.sort((a,b)=>String(b.submitted_at||'').localeCompare(String(a.submitted_at||'')));
+  myPharmData=all;
+
+  const editable=all.filter(r=>!r.exported).length;
+  $('#myPharmStats').innerHTML=`
+    <div class="kpi"><div class="num">${all.length}</div><div class="lbl">Total</div></div>
+    <div class="kpi"><div class="num">${editable}</div><div class="lbl">Editable</div></div>
+    <div class="kpi"><div class="num">${all.length-editable}</div><div class="lbl">Exported</div></div>`;
+
+  renderMyPharmTable(all);
+}
+
+function pharmRowSummary(r){
+  switch(r._table){
+    case 'sales_changes':return `Status: <b>${r.status||''}</b>`;
+    case 'near_expire_items':return `Batch: <b>${r.batch_number||''}</b> · Exp: <b>${r.expiry_date||''}</b> · Qty: <b>${r.quantity||0}</b>`;
+    case 'alternative_items':return `Alt: <b>${r.alternative_item_code||''}</b> ${r.alternative_description||''}`;
+    case 'overstock_items':return `${r.action||''} · Avail: <b>${r.available_qty||0}</b> → Return: <b>${r.recommended_qty||0}</b>`;
+    default:return '';
+  }
+}
+
+function renderMyPharmTable(data){
+  const tbl=$('#myPharmTable');
+  if(!data.length){
+    tbl.innerHTML='<tbody><tr><td style="padding:20px;text-align:center;color:var(--text-light)">No submissions yet</td></tr></tbody>';
+    return;
+  }
+  tbl.innerHTML='<thead><tr><th>Type</th><th>Store</th><th>Item</th><th>Description</th><th>Details</th><th>Notes</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody>'+
+    data.map(r=>{
+      const meta=PHARM_TABLES[r._table]||{};
+      const locked=!!r.exported;
+      const actions=locked
+        ? '<span style="font-size:10px;color:var(--text-light)" title="Already exported by admin">🔒</span>'
+        : `<button class="btn btn-sm btn-secondary" onclick="editPharmRow('${r._table}','${r.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deletePharmRow('${r._table}','${r.id}')">🗑</button>`;
+      const badge=locked?'<span class="exported-badge">Exported</span>':'<span class="edit-badge">Editable</span>';
+      return `<tr><td>${meta.icon||''} ${meta.label||r._table}</td><td>${r.store||''}</td><td>${r.item_code||''}</td><td>${r.description||''}</td><td style="font-size:11px">${pharmRowSummary(r)}</td><td>${r.notes||''}</td><td>${formatDate(r.submitted_at)}</td><td>${badge}</td><td>${actions}</td></tr>`;
+    }).join('')+
+    '</tbody>';
+}
+
+// ===== EDIT / DELETE (only while not exported) =====
+function editPharmRow(table,id){
+  const r=myPharmData.find(x=>String(x.id)===String(id)&&x._table===table);
+  if(!r){toast('Row not found','error');return}
+  if(r.exported){toast('This row was already exported and cannot be edited','warning');return}
+
+  let fields='';
+  if(table==='sales_changes'){
+    fields=`
+      <div class="form-group" style="margin-bottom:8px"><label>Item Code</label><input id="epItem" value="${r.item_code||''}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Description</label><input id="epDesc" value="${(r.description||'').replace(/"/g,'&quot;')}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Status</label><select id="epStatus">
+        ${['Open','Close','Coverage Uplift','Coverage Downlift'].map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}
+      </select></div>`;
+  }else if(table==='near_expire_items'){
+    fields=`
+      <div class="form-group" style="margin-bottom:8px"><label>Item Code</label><input id="epItem" value="${r.item_code||''}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Description</label><input id="epDesc" value="${(r.description||'').replace(/"/g,'&quot;')}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Batch Number</label><input id="epBatch" value="${r.batch_number||''}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Expiry Date</label><input type="date" id="epExpiry" value="${r.expiry_date||''}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Quantity</label><input type="number" id="epQty" value="${r.quantity||0}"></div>`;
+  }else if(table==='alternative_items'){
+    fields=`
+      <div class="form-group" style="margin-bottom:8px"><label>Item Code</label><input id="epItem" value="${r.item_code||''}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Description</label><input id="epDesc" value="${(r.description||'').replace(/"/g,'&quot;')}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Alternative Item Code</label><input id="epAltCode" value="${r.alternative_item_code||''}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Alternative Description</label><input id="epAltDesc" value="${(r.alternative_description||'').replace(/"/g,'&quot;')}"></div>`;
+  }else if(table==='overstock_items'){
+    fields=`
+      <div class="form-group" style="margin-bottom:8px"><label>Item Code</label><input id="epItem" value="${r.item_code||''}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Description</label><input id="epDesc" value="${(r.description||'').replace(/"/g,'&quot;')}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Available Qty</label><input type="number" id="epAvail" value="${r.available_qty||0}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Action</label><select id="epAction">
+        ${['ALL','Partial'].map(s=>`<option value="${s}" ${r.action===s?'selected':''}>${s}</option>`).join('')}
+      </select></div>
+      <div class="form-group" style="margin-bottom:8px"><label>Recommended Qty</label><input type="number" id="epRec" value="${r.recommended_qty||0}"></div>`;
+  }
+
+  showModal(`<h3>Edit — ${(PHARM_TABLES[table]||{}).label||table}</h3>
+    <p style="font-size:11px;color:var(--text-light);margin-bottom:12px">Store: <b>${r.store||''}</b></p>
+    ${fields}
+    <div class="form-group" style="margin-bottom:16px"><label>Notes</label><input id="epNotes" value="${(r.notes||'').replace(/"/g,'&quot;')}"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="savePharmEdit('${table}','${id}')">Save</button>
+      <button class="btn btn-secondary" onclick="hideModal()">Cancel</button>
+    </div>`);
+}
+
+async function savePharmEdit(table,id){
+  const data={notes:$('#epNotes').value.trim()};
+  const val=sel=>{const el=$(sel);return el?el.value.trim():''};
+
+  if(table==='sales_changes'){
+    data.item_code=val('#epItem');data.description=val('#epDesc');data.status=val('#epStatus');
+    if(!data.item_code){toast('Item code is required','error');return}
+  }else if(table==='near_expire_items'){
+    data.item_code=val('#epItem');data.description=val('#epDesc');
+    data.batch_number=val('#epBatch');data.expiry_date=val('#epExpiry');
+    data.quantity=parseInt($('#epQty').value)||0;
+    if(!data.item_code){toast('Item code is required','error');return}
+    if(data.quantity<1){toast('Enter a valid quantity','error');return}
+  }else if(table==='alternative_items'){
+    data.item_code=val('#epItem');data.description=val('#epDesc');
+    data.alternative_item_code=val('#epAltCode');data.alternative_description=val('#epAltDesc');
+    if(!data.item_code||!data.alternative_item_code){toast('Both item codes are required','error');return}
+  }else if(table==='overstock_items'){
+    data.item_code=val('#epItem');data.description=val('#epDesc');
+    data.available_qty=parseInt($('#epAvail').value)||0;
+    data.action=val('#epAction');
+    data.recommended_qty=data.action==='ALL'?data.available_qty:(parseInt($('#epRec').value)||0);
+    if(!data.item_code){toast('Item code is required','error');return}
+    if(data.available_qty<1){toast('Enter a valid available quantity','error');return}
+    if(data.recommended_qty<1){toast('Enter a valid recommended quantity','error');return}
+    if(data.recommended_qty>data.available_qty){toast('Recommended quantity cannot exceed available quantity','error');return}
+  }
+
+  try{
+    // Server-side guard: only update if still not exported
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}&exported=is.false`,{
+      method:'PATCH',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify(data)
+    });
+    const updated=await res.json();
+    if(Array.isArray(updated)&&updated.length){
+      toast('✅ Updated');
+    }else{
+      toast('Could not update — the row may have been exported','warning');
+    }
+    hideModal();
+    loadMyPharmSubmissions();
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
+async function deletePharmRow(table,id){
+  const r=myPharmData.find(x=>String(x.id)===String(id)&&x._table===table);
+  if(r&&r.exported){toast('This row was already exported and cannot be deleted','warning');return}
+  if(!confirm('Delete this submission?')) return;
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}&exported=is.false`,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'return=representation'}
+    });
+    const deleted=await res.json();
+    if(Array.isArray(deleted)&&deleted.length) toast('Deleted');
+    else toast('Could not delete — the row may have been exported','warning');
+    loadMyPharmSubmissions();
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
+function exportMyPharmSubmissions(){
+  if(!myPharmData.length){toast('No data to export','warning');return}
+  const wb=XLSX.utils.book_new();
+  Object.keys(PHARM_TABLES).forEach(t=>{
+    const rows=myPharmData.filter(r=>r._table===t);
+    if(!rows.length) return;
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.map(r=>pharmExportRow(t,r))),PHARM_TABLES[t].label.substring(0,31));
+  });
+  XLSX.writeFile(wb,'my_pharmacy_feedback_'+new Date().toISOString().split('T')[0]+'.xlsx');
+}
+
+function pharmExportRow(table,r){
+  const base={Store:r.store||'','Item Code':r.item_code||'',Description:r.description||''};
+  if(table==='sales_changes') Object.assign(base,{Status:r.status||''});
+  else if(table==='near_expire_items') Object.assign(base,{'Batch Number':r.batch_number||'','Expiry Date':r.expiry_date||'',Quantity:r.quantity||0});
+  else if(table==='alternative_items') Object.assign(base,{'Alternative Code':r.alternative_item_code||'','Alternative Description':r.alternative_description||''});
+  else if(table==='overstock_items') Object.assign(base,{'Available Qty':r.available_qty||0,Action:r.action||'','Recommended Qty':r.recommended_qty||0});
+  Object.assign(base,{
+    Notes:r.notes||'',
+    'Submitted By':r.submitted_by||'',
+    'Submitted At':formatDate(r.submitted_at),
+    Exported:r.exported?'Yes':'No'
+  });
+  // Enrich with store master info
+  const si=PHARM_STORE_INFO[r.store]||{};
+  Object.assign(base,{City:si.city||'',Area:si.area_name||'',Supervisor:si.supervisor||'','Area Manager':si.area_manager||''});
+  return base;
+}
+
+// ============================================================
+// ===== ADMIN: PHARMACY FEEDBACK =============================
+// ============================================================
+async function loadPharmFeedbackAdmin(){
+  if(!PHARM_STORES.length) await loadPharmStores();
+  const typeFilter=$('#pfFilterTab').value;
+  const tables=typeFilter?[typeFilter]:Object.keys(PHARM_TABLES);
+
+  $('#pfAdminTable').innerHTML='<tbody><tr><td style="padding:20px;text-align:center;color:var(--text-light)">Loading…</td></tr></tbody>';
+
+  let all=[];
+  for(const t of tables){
+    try{
+      const rows=await supaFetchAll(t,'select=*&order=submitted_at.desc');
+      rows.forEach(r=>{r._table=t});
+      all=all.concat(rows);
+    }catch(e){console.error('load '+t,e)}
+  }
+
+  // Populate filter dropdowns from the data (keep selection)
+  populatePfFilter('#pfFilterStore',[...new Set(all.map(r=>r.store).filter(Boolean))].sort(),'All Stores');
+  populatePfFilter('#pfFilterPharmacist',[...new Set(all.map(r=>r.submitted_by).filter(Boolean))].sort(),'All Pharmacists');
+
+  const store=$('#pfFilterStore').value;
+  const who=$('#pfFilterPharmacist').value;
+  const from=$('#pfFilterFrom').value;
+  const to=$('#pfFilterTo').value;
+  if(store) all=all.filter(r=>r.store===store);
+  if(who) all=all.filter(r=>r.submitted_by===who);
+  if(from) all=all.filter(r=>(r.submitted_at||'')>=from+'T00:00:00');
+  if(to) all=all.filter(r=>(r.submitted_at||'')<=to+'T23:59:59');
+  all.sort((a,b)=>String(b.submitted_at||'').localeCompare(String(a.submitted_at||'')));
+  pfAdminData=all;
+
+  const newRows=all.filter(r=>!r.exported).length;
+  const pharmacists=new Set(all.map(r=>r.submitted_by)).size;
+  const stores=new Set(all.map(r=>r.store)).size;
+  $('#pfAdminStats').innerHTML=`
+    <div class="kpi"><div class="num">${all.length}</div><div class="lbl">Total</div></div>
+    <div class="kpi"><div class="num">${newRows}</div><div class="lbl">New</div></div>
+    <div class="kpi"><div class="num">${all.length-newRows}</div><div class="lbl">Exported</div></div>
+    <div class="kpi"><div class="num">${stores}</div><div class="lbl">Stores</div></div>
+    <div class="kpi"><div class="num">${pharmacists}</div><div class="lbl">Pharmacists</div></div>`;
+
+  const tbl=$('#pfAdminTable');
+  if(!all.length){
+    tbl.innerHTML='<tbody><tr><td style="padding:20px;text-align:center;color:var(--text-light)">No submissions found</td></tr></tbody>';
+    return;
+  }
+  tbl.innerHTML='<thead><tr><th>Type</th><th>Store</th><th>Item</th><th>Description</th><th>Details</th><th>Notes</th><th>Pharmacist</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody>'+
+    all.map(r=>{
+      const meta=PHARM_TABLES[r._table]||{};
+      const badge=r.exported?'<span class="exported-badge">Exported</span>':'<span class="edit-badge">New</span>';
+      return `<tr><td>${meta.icon||''} ${meta.label||r._table}</td><td>${r.store||''}</td><td>${r.item_code||''}</td><td>${r.description||''}</td><td style="font-size:11px">${pharmRowSummary(r)}</td><td>${r.notes||''}</td><td>${r.submitted_by||''}</td><td>${formatDate(r.submitted_at)}</td><td>${badge}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="adminDeletePharmRow('${r._table}','${r.id}')">🗑</button></td></tr>`;
+    }).join('')+
+    '</tbody>';
+}
+
+function populatePfFilter(sel,values,allLabel){
+  const el=$(sel);
+  const current=el.value;
+  el.innerHTML=`<option value="">${allLabel}</option>`+values.map(v=>`<option value="${v}">${v}</option>`).join('');
+  if(values.includes(current)) el.value=current;
+}
+
+function clearPharmFilters(){
+  ['pfFilterTab','pfFilterStore','pfFilterPharmacist','pfFilterFrom','pfFilterTo'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});
+  loadPharmFeedbackAdmin();
+}
+
+async function adminDeletePharmRow(table,id){
+  if(!confirm('Delete this record permanently?')) return;
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'return=minimal'}
+    });
+    toast('Deleted');
+    loadPharmFeedbackAdmin();
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
+async function exportPharmFeedback(mode){
+  let data=pfAdminData;
+  if(mode==='unexported') data=data.filter(r=>!r.exported);
+  if(!data.length){toast(mode==='unexported'?'No new submissions to export':'No data to export','warning');return}
+
+  // Build workbook — one sheet per type
+  const wb=XLSX.utils.book_new();
+  Object.keys(PHARM_TABLES).forEach(t=>{
+    const rows=data.filter(r=>r._table===t);
+    if(!rows.length) return;
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.map(r=>pharmExportRow(t,r))),PHARM_TABLES[t].label.substring(0,31));
+  });
+  const stamp=new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb,`pharmacy_feedback_${mode}_${stamp}.xlsx`);
+
+  // Mark as exported — this locks the rows for pharmacists
+  if(mode==='unexported'){
+    if(!confirm(`Exported ${data.length} rows.\n\nMark them as exported? Pharmacists will no longer be able to edit or delete them.`)){
+      toast('Exported without locking','warning');
+      return;
+    }
+    let marked=0;
+    for(const t of Object.keys(PHARM_TABLES)){
+      const ids=data.filter(r=>r._table===t).map(r=>r.id);
+      for(let i=0;i<ids.length;i+=200){
+        const chunk=ids.slice(i,i+200);
+        try{
+          await fetch(`${SUPABASE_URL}/rest/v1/${t}?id=in.(${chunk.join(',')})`,{
+            method:'PATCH',
+            headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+            body:JSON.stringify({exported:true})
+          });
+          marked+=chunk.length;
+        }catch(e){console.error('mark exported '+t,e)}
+      }
+    }
+    toast(`✅ Exported and locked ${marked} rows`);
+    loadPharmFeedbackAdmin();
+  }else{
+    toast(`✅ Exported ${data.length} rows`);
+  }
+}
+
+// ============================================================
+// ===== SMART COLUMN MAPPING =================================
+// ============================================================
+function normHeader(h){
+  return String(h||'').toLowerCase().replace(/[_\-\.\/\\]+/g,' ').replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+}
+
+// Levenshtein distance → similarity 0..1
+function strSimilarity(a,b){
+  a=normHeader(a);b=normHeader(b);
+  if(!a||!b) return 0;
+  if(a===b) return 1;
+  if(a.includes(b)||b.includes(a)) return 0.85;
+  const m=a.length,n=b.length;
+  const dp=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+    }
+  }
+  return 1-dp[m][n]/Math.max(m,n);
+}
+
+// Score a file header against an expected column (field + aliases)
+function scoreHeader(fileHeader,spec){
+  const candidates=[spec.label,...(spec.aliases||[])];
+  let best=0;
+  candidates.forEach(c=>{const s=strSimilarity(fileHeader,c);if(s>best)best=s});
+  return best;
+}
+
+// Auto-map: for each expected column, pick the best unused file header
+function autoMapColumns(fileHeaders,specs){
+  const used=new Set();
+  const mapping={};
+  // Pass 1: exact/near-exact matches first
+  const scored=[];
+  specs.forEach(spec=>{
+    fileHeaders.forEach((h,idx)=>{
+      scored.push({field:spec.field,idx,score:scoreHeader(h,spec)});
+    });
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  scored.forEach(s=>{
+    if(mapping[s.field]!==undefined) return;
+    if(used.has(s.idx)) return;
+    if(s.score<0.55) return;
+    mapping[s.field]=s.idx;
+    used.add(s.idx);
+  });
+  specs.forEach(spec=>{if(mapping[spec.field]===undefined) mapping[spec.field]=-1});
+  return mapping;
+}
+
+function matchQuality(fileHeader,spec){
+  if(fileHeader===undefined||fileHeader===null) return {cls:'match-none',label:'Not mapped'};
+  const s=scoreHeader(fileHeader,spec);
+  if(s>=0.95) return {cls:'match-exact',label:'Exact'};
+  if(s>=0.55) return {cls:'match-fuzzy',label:'Similar'};
+  return {cls:'match-none',label:'Manual'};
+}
+
+// Render the mapping dialog
+function showColumnMapping(type,headers,rows,specs,mapping){
+  pendingMasterUpload={type,headers,rows,specs,mapping};
+  const optionsHtml=idx=>'<option value="-1">— Not mapped —</option>'+
+    headers.map((h,i)=>`<option value="${i}" ${i===idx?'selected':''}>${h||'(column '+(i+1)+')'}</option>`).join('');
+
+  const rowsHtml=specs.map(spec=>{
+    const idx=mapping[spec.field];
+    const q=matchQuality(idx>=0?headers[idx]:null,spec);
+    return `<div class="mapping-row">
+      <div class="expected">${spec.label}${spec.required?' <span style="color:var(--danger)">*</span>':''}</div>
+      <div class="arrow">→</div>
+      <select id="map_${spec.field}" onchange="updateMappingBadge('${spec.field}')">${optionsHtml(idx)}</select>
+      <span class="match-badge ${q.cls}" id="badge_${spec.field}">${q.label}</span>
+    </div>`;
+  }).join('');
+
+  const sampleRow=rows[1]||[];
+  const preview=specs.filter(s=>mapping[s.field]>=0).slice(0,4)
+    .map(s=>`${s.label}: <b>${sampleRow[mapping[s.field]]||'—'}</b>`).join(' · ');
+
+  const div=document.createElement('div');
+  div.className='mapping-overlay';
+  div.id='mappingOverlay';
+  div.innerHTML=`<div class="mapping-dialog">
+    <h3>🔗 Column Mapping — ${type==='store'?'Store Master':'Item Master'}</h3>
+    <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">
+      Found <b>${headers.length}</b> columns and <b>${rows.length-1}</b> data rows.
+      Columns were matched automatically — review and adjust if needed.
+    </p>
+    ${rowsHtml}
+    <div class="mapping-preview">First row preview: ${preview||'—'}</div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" onclick="confirmMasterUpload()">Continue Upload</button>
+      <button class="btn btn-secondary" onclick="cancelMasterUpload()">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+function updateMappingBadge(field){
+  if(!pendingMasterUpload) return;
+  const {headers,specs}=pendingMasterUpload;
+  const spec=specs.find(s=>s.field===field);
+  const idx=parseInt($('#map_'+field).value);
+  pendingMasterUpload.mapping[field]=idx;
+  const q=matchQuality(idx>=0?headers[idx]:null,spec);
+  const badge=$('#badge_'+field);
+  badge.className='match-badge '+q.cls;
+  badge.textContent=idx>=0?q.label:'Not mapped';
+}
+
+function cancelMasterUpload(){
+  const ov=$('#mappingOverlay');
+  if(ov) ov.remove();
+  if(pendingMasterUpload){
+    const inp=$(pendingMasterUpload.type==='store'?'#storeMasterInput':'#itemMasterInput');
+    if(inp) inp.value='';
+  }
+  pendingMasterUpload=null;
+}
+
+async function confirmMasterUpload(){
+  if(!pendingMasterUpload) return;
+  const {type,rows,specs,mapping}=pendingMasterUpload;
+
+  // Validate required fields
+  const missing=specs.filter(s=>s.required&&(mapping[s.field]===undefined||mapping[s.field]<0));
+  if(missing.length){
+    toast('Required column not mapped: '+missing.map(s=>s.label).join(', '),'error');
+    return;
+  }
+
+  const ov=$('#mappingOverlay');
+  if(ov) ov.remove();
+
+  if(type==='store') await doStoreMasterUpload(rows,mapping);
+  else await doItemMasterUpload(rows,mapping);
+
+  pendingMasterUpload=null;
+}
+
+// ===== STORE MASTER =====
+const STORE_SPECS=[
+  {field:'plant',label:'Plant',required:true,aliases:['store','store code','plant code','pharmacy','pharmacy code','site','branch','branch code','plant id']},
+  {field:'city',label:'City',aliases:['town','city name','location']},
+  {field:'area_name',label:'Area Name',aliases:['area','region','zone','area nm','areaname']},
+  {field:'supervisor',label:'Supervisor',aliases:['supervisor name','sup','spv','supervisior']},
+  {field:'area_manager',label:'Area Manager',aliases:['manager','area mgr','am','region manager','areamanager']},
+  {field:'head',label:'Head',aliases:['head name','department head','head of area','gm']},
+  {field:'opening_date',label:'Opening Date',aliases:['open date','opened','opening','date opened','start date']},
+  {field:'age_in_days',label:'Age in Days',aliases:['age days','days','age in day','ageindays','days open']},
+  {field:'age',label:'Age',aliases:['age group','age category','age band','maturity']},
+  {field:'wh',label:'WH',aliases:['warehouse','wh code','warehouse code','dc','plant wh','source wh']},
+  {field:'store_type',label:'Store Type',aliases:['type','pharmacy type','branch type','storetype','classification','class']}
+];
+
+function handleStoreMasterUpload(input){
+  if(!input.files.length) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(rows.length<2){toast('File is empty','error');return}
+      const headers=rows[0].map(h=>String(h||'').trim());
+      const mapping=autoMapColumns(headers,STORE_SPECS);
+      showColumnMapping('store',headers,rows,STORE_SPECS,mapping);
+    }catch(err){toast('Error reading file: '+err.message,'error')}
+  };
+  reader.readAsArrayBuffer(input.files[0]);
+}
+
+async function doStoreMasterUpload(rows,mapping){
+  const get=(r,field)=>{const i=mapping[field];return i>=0?String(r[i]||'').trim():''};
+  const out=[];
+  const seen=new Set();
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||r.every(c=>c===''||c===null||c===undefined)) continue;
+    const plant=get(r,'plant').toUpperCase();
+    if(!plant||seen.has(plant)) continue;
+    seen.add(plant);
+    const ageDaysRaw=get(r,'age_in_days').replace(/[^0-9.\-]/g,'');
+    out.push({
+      plant,
+      city:get(r,'city'),
+      area_name:get(r,'area_name'),
+      supervisor:get(r,'supervisor'),
+      area_manager:get(r,'area_manager'),
+      head:get(r,'head'),
+      opening_date:get(r,'opening_date'),
+      age_in_days:parseInt(ageDaysRaw)||0,
+      age:get(r,'age'),
+      wh:get(r,'wh'),
+      store_type:get(r,'store_type')
+    });
+  }
+  if(!out.length){toast('No valid rows found','error');return}
+
+  $('#storeMasterProgress').classList.remove('hidden');
+  $('#storeMasterText').textContent=`Parsed ${out.length} stores. Clearing old data…`;
+  $('#storeMasterBar').style.width='0%';
+
+  try{
+    await clearTable('stores');
+    const batchSize=500;
+    for(let i=0;i<out.length;i+=batchSize){
+      const batch=out.slice(i,i+batchSize);
+      await supaInsert('stores',batch);
+      const pct=Math.min(100,Math.round((i+batchSize)/out.length*100));
+      $('#storeMasterBar').style.width=pct+'%';
+      $('#storeMasterText').textContent=`Uploaded ${Math.min(i+batchSize,out.length)} / ${out.length} stores`;
+    }
+    $('#storeMasterBar').style.width='100%';
+    $('#storeMasterText').textContent=`✅ Done — ${out.length} stores uploaded`;
+    toast(`✅ Store Master updated: ${out.length} stores`);
+    $('#storeMasterInput').value='';
+    await loadPharmStores();
+    loadMasterDataStats();
+  }catch(e){
+    toast('Upload error: '+e.message,'error');
+    $('#storeMasterText').textContent='❌ Error: '+e.message;
+  }
+}
+
+// ===== ITEM MASTER =====
+const ITEM_SPECS=[
+  {field:'item_code',label:'Item Number',required:true,aliases:['item','item code','material','material code','material number','sku','code','item no','itemnumber','article']},
+  {field:'description',label:'Description',aliases:['desc','item description','material description','name','item name','product name','short text']},
+  {field:'status',label:'Status',aliases:['item status','material status','state','type','category','flag']}
+];
+
+function handleItemMasterUpload(input){
+  if(!input.files.length) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(rows.length<2){toast('File is empty','error');return}
+      const headers=rows[0].map(h=>String(h||'').trim());
+      const mapping=autoMapColumns(headers,ITEM_SPECS);
+      showColumnMapping('item',headers,rows,ITEM_SPECS,mapping);
+    }catch(err){toast('Error reading file: '+err.message,'error')}
+  };
+  reader.readAsArrayBuffer(input.files[0]);
+}
+
+async function doItemMasterUpload(rows,mapping){
+  const get=(r,field)=>{const i=mapping[field];return i>=0?String(r[i]||'').trim():''};
+  const out=[];
+  const seen=new Set();
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||r.every(c=>c===''||c===null||c===undefined)) continue;
+    const code=get(r,'item_code').replace(/\.0$/,'');
+    if(!code||seen.has(code)) continue;
+    seen.add(code);
+    out.push({
+      item_code:code,
+      description:get(r,'description'),
+      status:get(r,'status')||'REGULAR'
+    });
+  }
+  if(!out.length){toast('No valid items found','error');return}
+
+  $('#itemMasterProgress').classList.remove('hidden');
+  $('#itemMasterText').textContent=`Parsed ${out.length} items. Clearing old catalog…`;
+  $('#itemMasterBar').style.width='0%';
+
+  try{
+    await clearTable('items_catalog');
+    const batchSize=500;
+    for(let i=0;i<out.length;i+=batchSize){
+      const batch=out.slice(i,i+batchSize);
+      await supaInsert('items_catalog',batch);
+      const pct=Math.min(100,Math.round((i+batchSize)/out.length*100));
+      $('#itemMasterBar').style.width=pct+'%';
+      $('#itemMasterText').textContent=`Uploaded ${Math.min(i+batchSize,out.length)} / ${out.length} items`;
+    }
+    $('#itemMasterBar').style.width='100%';
+    $('#itemMasterText').textContent=`✅ Done — ${out.length} items uploaded`;
+    toast(`✅ Item Master updated: ${out.length} items`);
+    $('#itemMasterInput').value='';
+    loadMasterDataStats();
+  }catch(e){
+    toast('Upload error: '+e.message,'error');
+    $('#itemMasterText').textContent='❌ Error: '+e.message;
+  }
+}
+
+// Clear a whole table (paged, so it works past the 1000-row API cap)
+async function clearTable(table){
+  let guard=0;
+  while(guard++<100){
+    await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=not.is.null`,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'return=minimal'}
+    });
+    const check=await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=id&limit=1`,{
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+    });
+    const remaining=await check.json();
+    if(!Array.isArray(remaining)||!remaining.length) break;
+  }
+}
+
+async function tableCount(table){
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=id&limit=1`,{
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'count=exact','Range':'0-0'}
+    });
+    const cr=res.headers.get('content-range');
+    return cr?cr.split('/')[1]:'?';
+  }catch(e){return '?'}
+}
+
+async function loadMasterDataStats(){
+  const [storeCount,itemCount]=await Promise.all([tableCount('stores'),tableCount('items_catalog')]);
+  $('#storeMasterStats').innerHTML=`<div class="kpi" style="display:inline-block"><div class="num">${storeCount}</div><div class="lbl">Stores</div></div>`;
+  $('#itemMasterStats').innerHTML=`<div class="kpi" style="display:inline-block"><div class="num">${itemCount}</div><div class="lbl">Items in Catalog</div></div>`;
+}
+
+// ===== ADMIN: EDIT USER MODULE ACCESS =====
+function editUserModules(id,name,current){
+  const mods=(current||'pulse').split(',').map(m=>m.trim());
+  showModal(`<h3>Module Access — ${name}</h3>
+    <p style="font-size:12px;color:var(--text-light);margin-bottom:14px">Choose which systems this user can sign in to.</p>
+    <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer">
+      <input type="checkbox" id="emPulse" ${mods.includes('pulse')?'checked':''}>
+      <span><b>📦 PULSE</b><br><span style="font-size:11px;color:var(--text-light)">Pharmacy Urgent Live Stock Engine</span></span>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:16px;cursor:pointer">
+      <input type="checkbox" id="emFeedback" ${mods.includes('feedback')?'checked':''}>
+      <span><b>💊 Pharmacy Feedback</b><br><span style="font-size:11px;color:var(--text-light)">ملاحظات الصيدلية</span></span>
+    </label>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveUserModules('${id}')">Save</button>
+      <button class="btn btn-secondary" onclick="hideModal()">Cancel</button>
+    </div>`);
+}
+
+async function saveUserModules(id){
+  const mods=[];
+  if($('#emPulse').checked) mods.push('pulse');
+  if($('#emFeedback').checked) mods.push('feedback');
+  if(!mods.length){toast('Select at least one module','error');return}
+  try{
+    await supaUpdate('app_users',{id:id},{allowed_modules:mods.join(',')});
+    hideModal();
+    toast('✅ Module access updated');
+    loadUsers();
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+
 init();
-console.log('PULSE v7.2 loaded - material_code fix');
+console.log('PULSE v8.0 loaded — Pharmacy Feedback module');
 </script>
 </body>
 </html>
