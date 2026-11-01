@@ -1249,6 +1249,8 @@ async function changePassword(){
 
 // ===== ITEM SEARCH =====
 let searchTimeout=null;
+let itemSearchCache=[];    // PULSE captain dropdown
+let pharmItemCache=[];     // Pharmacy Feedback dropdowns
 function searchItems(input,ddId,mode='code'){
   clearTimeout(searchTimeout);
   searchTimeout=setTimeout(async()=>{
@@ -1273,14 +1275,15 @@ function searchItems(input,ddId,mode='code'){
         dd.classList.add('show');
         return;
       }
-      dd.innerHTML=matches.map(item=>{
+      itemSearchCache=matches;
+      dd.innerHTML=matches.map((item,i)=>{
         const status=item.status||'';
         let tagHtml='';
         if(status==='SPECIAL ITEM') tagHtml='<span class="tag tag-special">Special</span>';
         else if(status==='DELISTED ITEM') tagHtml='<span class="tag tag-delisted">Delisted</span>';
         else if(status==='UNICHARM') tagHtml='<span class="tag tag-unicharm">Unicharm</span>';
         else if(status==='DEVICES') tagHtml='<span class="tag tag-devices">Devices</span>';
-        return `<div class="dd-item" onclick="selectItem('${item.item_code}','${(item.description||'').replace(/'/g,"\\'")}','${status}')"><span class="code">${item.item_code}</span> <span class="desc">${item.description}</span>${tagHtml}</div>`;
+        return `<div class="dd-item" onclick="selectItem(${i})"><span class="code">${escHtml(item.item_code)}</span> <span class="desc">${escHtml(item.description)}</span>${tagHtml}</div>`;
       }).join('');
       dd.classList.add('show');
     }catch(e){
@@ -1291,12 +1294,14 @@ function searchItems(input,ddId,mode='code'){
   },300);
 }
 
-function selectItem(code,desc,status){
-  $('#entryItem').value=code;
-  $('#entryDesc').value=desc;
+function selectItem(i){
+  const item=itemSearchCache[i];
+  if(!item) return;
+  $('#entryItem').value=item.item_code;
+  $('#entryDesc').value=item.description||'';
   $('#entryItemDD').classList.remove('show');
   $('#entryDescDD').classList.remove('show');
-  showItemStatusBadge(status);
+  showItemStatusBadge(item.status||'');
 }
 
 function showItemStatusBadge(status){
@@ -2396,19 +2401,34 @@ async function confirmActionUpload(){
 }
 
 // ===== USER MANAGEMENT =====
+// Rows are rendered with an index only. Never interpolate a name into an inline
+// handler: one apostrophe in a display name breaks the whole row's buttons.
+let usersCache=[];
+
+function escHtml(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 async function loadUsers(){
-  const users=await supaFetchAll('app_users','select=id,username,display_name,role,sales_type,supervisor,area,allowed_modules&order=role.asc,display_name.asc');
   const tbl=$('#usersTable');
+  try{
+    usersCache=await supaFetchAll('app_users','select=id,username,display_name,role,sales_type,supervisor,area,allowed_modules&order=role.asc,display_name.asc');
+  }catch(e){
+    tbl.innerHTML='<tbody><tr><td style="padding:20px;text-align:center;color:var(--danger)">Could not load users: '+escHtml(e.message)+'</td></tr></tbody>';
+    return;
+  }
   tbl.innerHTML='<thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Modules</th><th>Sales Type</th><th>Supervisor</th><th>Area</th><th></th></tr></thead><tbody>'+
-    users.map(u=>{
+    usersCache.map((u,i)=>{
       const mods=(u.allowed_modules||'pulse').split(',');
       const modBadges=mods.map(m=>{
         if(m.trim()==='pulse') return '<span style="background:#DBEAFE;color:#1E40AF;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:500">PULSE</span>';
         if(m.trim()==='feedback') return '<span style="background:#D1FAE5;color:#065F46;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:500">Feedback</span>';
         return '';
       }).join(' ');
-      return `<tr><td>${u.display_name}</td><td>${u.username}</td><td>${u.role}</td><td>${modBadges}</td><td>${u.sales_type||''}</td><td>${u.supervisor||''}</td><td>${u.area||''}</td>
-      <td><button class="btn btn-sm btn-secondary" onclick="editUserModules('${u.id}','${u.display_name}','${u.allowed_modules||'pulse'}')">⚙</button> <button class="btn btn-sm btn-secondary" onclick="resetUserPass('${u.id}','${u.display_name}')">🔑</button> <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}','${u.display_name}')">🗑</button></td></tr>`;
+      return `<tr><td>${escHtml(u.display_name)}</td><td>${escHtml(u.username)}</td><td>${escHtml(u.role)}</td><td>${modBadges}</td><td>${escHtml(u.sales_type)}</td><td>${escHtml(u.supervisor)}</td><td>${escHtml(u.area)}</td>
+      <td><button class="btn btn-sm btn-secondary" onclick="editUserModules(${i})" title="Module access">⚙</button> <button class="btn btn-sm btn-secondary" onclick="resetUserPass(${i})" title="Reset password">🔑</button> <button class="btn btn-sm btn-danger" onclick="deleteUser(${i})" title="Delete user">🗑</button></td></tr>`;
     }).join('')+
     '</tbody>';
 }
@@ -2477,18 +2497,35 @@ async function addUser(){
   }catch(e){toast('Error: '+e.message,'error')}
 }
 
-async function resetUserPass(id,name){
-  if(!confirm(`Reset password for ${name} to 123456?`)) return;
-  const hash=await sha256('123456');
-  await supaUpdate('app_users',{id:id},{password_hash:hash});
-  toast('Password reset!');
+async function resetUserPass(i){
+  const u=usersCache[i];
+  if(!u){toast('User not found — refreshing','warning');loadUsers();return}
+  if(!confirm(`Reset password for ${u.display_name} to 123456?`)) return;
+  try{
+    const hash=await sha256('123456');
+    await supaUpdate('app_users',{id:u.id},{password_hash:hash});
+    toast('Password reset!');
+  }catch(e){toast('Could not reset password: '+e.message,'error')}
 }
 
-async function deleteUser(id,name){
-  if(!confirm(`Delete user ${name}?`)) return;
-  await supaDelete('app_users',[id]);
-  toast('User deleted');
-  loadUsers();
+async function deleteUser(i){
+  const u=usersCache[i];
+  if(!u){toast('User not found — refreshing','warning');loadUsers();return}
+  if(currentUser&&String(u.id)===String(currentUser.id)){
+    toast('You cannot delete the account you are signed in with','warning');return;
+  }
+  if(!confirm(`Delete user ${u.display_name}?`)) return;
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/app_users?id=eq.${encodeURIComponent(u.id)}`,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'return=representation'}
+    });
+    if(!res.ok){toast('Could not delete: '+(await res.text()),'error');return}
+    const removed=await res.json();
+    if(Array.isArray(removed)&&removed.length) toast('User deleted');
+    else toast('Nothing was deleted — the row may already be gone','warning');
+    loadUsers();
+  }catch(e){toast('Could not delete: '+e.message,'error')}
 }
 
 // ===== MANAGE ACTIONS =====
@@ -2814,11 +2851,10 @@ function searchPharmItems(input,ddId,descId){
         dd.innerHTML='<div class="dd-item" style="color:var(--text-light)">No results — you can type the code manually</div>';
         dd.classList.add('show');return;
       }
-      dd.innerHTML=matches.map(it=>{
-        const safeDesc=(it.description||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
-        const safeType=String(it.item_type||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
-        const typeTag=it.item_type?` <span class="type-badge">${it.item_type}</span>`:'';
-        return `<div class="dd-item" onclick="selectPharmItem('${it.item_code}','${safeDesc}','${inputId}','${descId}','${ddId}','${safeType}')"><span class="code">${it.item_code}</span> <span class="desc">${it.description||''}</span>${typeTag}</div>`;
+      pharmItemCache=matches;
+      dd.innerHTML=matches.map((it,i)=>{
+        const typeTag=it.item_type?` <span class="type-badge">${escHtml(it.item_type)}</span>`:'';
+        return `<div class="dd-item" onclick="selectPharmItem(${i},'${inputId}','${descId}','${ddId}')"><span class="code">${escHtml(it.item_code)}</span> <span class="desc">${escHtml(it.description)}</span>${typeTag}</div>`;
       }).join('');
       dd.classList.add('show');
     }catch(e){
@@ -2841,12 +2877,14 @@ function searchPharmItems(input,ddId,descId){
   }
 }
 
-function selectPharmItem(code,desc,inputId,descId,ddId,itemType){
-  $('#'+inputId).value=code;
-  $('#'+descId).value=desc;
+function selectPharmItem(i,inputId,descId,ddId){
+  const it=pharmItemCache[i];
+  if(!it) return;
+  $('#'+inputId).value=it.item_code;
+  $('#'+descId).value=it.description||'';
   $('#'+ddId).classList.remove('show');
   if(inputId==='neItemCode'){
-    neItemType=itemType===undefined?null:(itemType||'');
+    neItemType=it.item_type||'';
     applyExpiryRuleHint();
   }
 }
@@ -3668,9 +3706,12 @@ async function loadMasterDataStats(){
 }
 
 // ===== ADMIN: EDIT USER MODULE ACCESS =====
-function editUserModules(id,name,current){
-  const mods=(current||'pulse').split(',').map(m=>m.trim());
-  showModal(`<h3>Module Access — ${name}</h3>
+function editUserModules(i){
+  const u=usersCache[i];
+  if(!u){toast('User not found — refreshing','warning');loadUsers();return}
+  const id=u.id;
+  const mods=(u.allowed_modules||'pulse').split(',').map(m=>m.trim());
+  showModal(`<h3>Module Access — ${escHtml(u.display_name)}</h3>
     <p style="font-size:12px;color:var(--text-light);margin-bottom:14px">Choose which systems this user can sign in to.</p>
     <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer">
       <input type="checkbox" id="emPulse" ${mods.includes('pulse')?'checked':''}>
@@ -3703,6 +3744,7 @@ async function saveUserModules(id){
 // ===== EXPIRY RULES =========================================
 // ============================================================
 let EXPIRY_RULES={};      // normalized type -> {item_type,min_months,max_months}
+let rulesCache=[];        // rules as rendered, for index-based row actions
 let ITEM_TYPES=[];        // distinct item types present in the catalog
 let neItemType=null;      // item type of the item currently typed in the Near Expire tab
 
@@ -3826,19 +3868,20 @@ function renderRulesTable(){
     return;
   }
   const today=new Date();today.setHours(0,0,0,0);
+  rulesCache=rules;
   tbl.innerHTML='<thead><tr><th>Item Type</th><th>Min months</th><th>Max months</th><th>Allowed window today</th><th>Last updated</th><th></th></tr></thead><tbody>'+
-    rules.map(r=>`<tr>
-      <td><span class="type-badge">${r.item_type}</span></td>
+    rules.map((r,i)=>`<tr>
+      <td><span class="type-badge">${escHtml(r.item_type)}</span></td>
       <td>${r.min_months}</td><td>${r.max_months}</td>
       <td style="font-size:11px">${fmtShort(addMonths(today,r.min_months))} → ${fmtShort(addMonths(today,r.max_months))}</td>
-      <td style="font-size:11px">${r.updated_at?formatDate(r.updated_at):''}${r.updated_by?' · '+r.updated_by:''}</td>
-      <td><button class="btn btn-sm btn-secondary" onclick="editExpiryRule('${String(r.item_type).replace(/'/g,"\\'")}')">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteExpiryRule('${r.id}','${String(r.item_type).replace(/'/g,"\\'")}')">🗑</button></td>
+      <td style="font-size:11px">${r.updated_at?formatDate(r.updated_at):''}${r.updated_by?' · '+escHtml(r.updated_by):''}</td>
+      <td><button class="btn btn-sm btn-secondary" onclick="editExpiryRule(${i})">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteExpiryRule(${i})">🗑</button></td>
     </tr>`).join('')+'</tbody>';
 }
 
-function editExpiryRule(type){
-  const r=EXPIRY_RULES[normType(type)];
+function editExpiryRule(i){
+  const r=rulesCache[i];
   if(!r) return;
   $('#ruleType').value=r.item_type;
   $('#ruleMin').value=r.min_months;
@@ -3868,11 +3911,13 @@ async function saveExpiryRule(){
   }catch(e){toast('Error: '+e.message,'error')}
 }
 
-async function deleteExpiryRule(id,type){
+async function deleteExpiryRule(i){
   if(currentUser.role!=='admin'){toast('Admins only','error');return}
-  if(!confirm(`Remove the rule for "${type}"?\n\nItems of this type will then be accepted with any expiry date and flagged for you.`)) return;
+  const r=rulesCache[i];
+  if(!r) return;
+  if(!confirm(`Remove the rule for "${r.item_type}"?\n\nItems of this type will then be accepted with any expiry date and flagged for you.`)) return;
   try{
-    await supaDelete('expiry_rules',[id]);
+    await supaDelete('expiry_rules',[r.id]);
     toast('Rule removed');
     await loadExpiryRulesTab();
   }catch(e){toast('Error: '+e.message,'error')}
